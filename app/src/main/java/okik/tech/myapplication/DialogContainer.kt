@@ -5,13 +5,12 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
-import android.view.View
 import android.widget.FrameLayout
 
 // this component is just a frame layout wrapped in a rounded corner shape, the difference
 // with a material card is that this one doesn't have "card elevation" and is intended to be passed
 // any view programmatically. It wraps its content automatically
-class TutorialNodeBackground @JvmOverloads constructor(
+class DialogContainer @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
@@ -27,6 +26,8 @@ class TutorialNodeBackground @JvmOverloads constructor(
         paint.isAntiAlias = true
 
         cornerRadius = 80f
+
+        setBackgroundColor(Color.TRANSPARENT)
     }
 
     fun updateBackgroundPaint(paint: Paint) {
