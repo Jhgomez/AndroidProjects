@@ -17,9 +17,9 @@ class DialogOriginTriangle @JvmOverloads constructor(
     // This works in combination with LEFT or RIGHT orientation, it won't work with TOP nor BOTTOM
     private var yOriginOffsetPercent: Float
 
-    // this component is intended to be the origin of a dialog, so if set to "top", it will be a triangle upside down
-    // "bottom" is a normal triangle, "left" the triangle is laid to the right(growing from left right to left), "right"
-    // triangle is laid to left(it grows from left to right)
+    // this component is intended to be the origin of a dialog, so if set to "Buttom", it will be a triangle upside down
+    // "Top" is a normal triangle, "right" the triangle is rotated to the right(growing from left right to left), "left"
+    // triangle is rotated to left(it grows from left to right)
     private var orientation: String
 
     private val path: Path
@@ -47,6 +47,7 @@ class DialogOriginTriangle @JvmOverloads constructor(
         paint = Paint()
         paint.color = Color.WHITE
         paint.style = Paint.Style.FILL
+        paint.alpha = 100
         paint.isAntiAlias = true // to render smooth edges
     }
 
@@ -68,7 +69,7 @@ class DialogOriginTriangle @JvmOverloads constructor(
         var ySecondVertex: Float
 
         when(orientation.lowercase()) {
-            "top" -> {
+            "bottom" -> {
                 xOrigin = triangleWidth * xOriginOffsetPercent
                 yOrigin = triangleHeight
                 xFirstVertex = triangleWidth
@@ -76,7 +77,7 @@ class DialogOriginTriangle @JvmOverloads constructor(
                 xSecondVertex = 0f
                 ySecondVertex = 0f
             }
-            "bottom" -> {
+            "top" -> {
                 xOrigin = triangleWidth * xOriginOffsetPercent
                 yOrigin = 0f
                 xFirstVertex = triangleWidth
@@ -84,7 +85,7 @@ class DialogOriginTriangle @JvmOverloads constructor(
                 xSecondVertex = 0f
                 ySecondVertex = triangleHeight
             }
-            "right" -> {
+            "left" -> {
                 xOrigin = 0f
                 yOrigin = triangleHeight * yOriginOffsetPercent
                 xFirstVertex = triangleWidth
@@ -92,7 +93,7 @@ class DialogOriginTriangle @JvmOverloads constructor(
                 xSecondVertex = triangleWidth
                 ySecondVertex = triangleHeight
             }
-            "left" -> {
+            "right" -> {
                 xOrigin = triangleWidth
                 yOrigin = triangleHeight * yOriginOffsetPercent
                 xFirstVertex = 0f
