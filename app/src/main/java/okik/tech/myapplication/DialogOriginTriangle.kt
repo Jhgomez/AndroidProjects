@@ -8,7 +8,7 @@ import android.util.AttributeSet
 import android.graphics.Path
 import android.view.View
 
-class TutorialDialogContainer @JvmOverloads constructor(
+class DialogOriginTriangle @JvmOverloads constructor(
     context: Context, attrs: AttributeSet? = null,
 ) : View(context, attrs) {
     // This works in combination with TOP or BOTTOM orientation it won't work with LEFT nor RIGHT
@@ -23,20 +23,20 @@ class TutorialDialogContainer @JvmOverloads constructor(
     private var orientation: String
 
     private val path: Path
-    private val paint: Paint
+    private var paint: Paint
 
     init {
-        val passAttrs = context.obtainStyledAttributes(attrs, R.styleable.TutorialDialogContainer)
+        val passAttrs = context.obtainStyledAttributes(attrs, R.styleable.DialogOriginTriangle)
 
         try {
             yOriginOffsetPercent =
-                passAttrs.getFloat(R.styleable.TutorialDialogContainer_YOriginOffsetPercent, 0.5f)
+                passAttrs.getFloat(R.styleable.DialogOriginTriangle_YOriginOffsetPercent, 0.5f)
 
             xOriginOffsetPercent =
-                passAttrs.getFloat(R.styleable.TutorialDialogContainer_XOriginOffsetPercent, 0.5f)
+                passAttrs.getFloat(R.styleable.DialogOriginTriangle_XOriginOffsetPercent, 0.5f)
 
             orientation =
-                passAttrs.getString(R.styleable.TutorialDialogContainer_Orientation) ?: "bottom"
+                passAttrs.getString(R.styleable.DialogOriginTriangle_Orientation) ?: "bottom"
 
        } finally {
             passAttrs.recycle()
@@ -129,6 +129,11 @@ class TutorialDialogContainer @JvmOverloads constructor(
 
     fun setTrianglePosition(value: String) {
         orientation = value
+        invalidate()
+    }
+
+    fun setPaint(paint: Paint) {
+        this.paint = paint
         invalidate()
     }
 }
