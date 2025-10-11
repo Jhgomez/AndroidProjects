@@ -1,16 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="TutorialDialogContainer">
-        <attr name="DivideByOriginInitX" format="float"/>
-        <attr name="DivideByOriginInitY" format="float"/>
-        <attr name="TriangleWidth" format="integer"/>
-        <attr name="TriangleHeight" format="integer"/>
-        <attr name="CardCornerRadius" format="float"/>
+    <declare-styleable name="DialogOriginTriangle">
+        <!-- Should use values from 0 to 1 but it can handle other values -->
+        <attr name="XOriginOffsetPercent" format="float"/>
+        <attr name="YOriginOffsetPercent" format="float"/>
         <!-- top, bottom, left, right -->
-        <attr name="TrianglePosition" format="string" />
-        <!-- horizontal, vertical  -->
-        <attr name="Orientation" format="string"/>
-        <!-- 0f to 1f is the percentage yow will move triangle from left to right or top to bottom -->
-        <attr name="TrianglePositionOffsetPercentage" format="float"/>
+        <attr name="Orientation" format="string" />
     </declare-styleable>
 </resources>
