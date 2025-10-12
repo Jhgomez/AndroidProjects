@@ -18,7 +18,8 @@ class TutorialLayout @JvmOverloads constructor(
 ) : ConstraintLayout(context, attrs) {
     val paint: Paint= Paint()
     val some = TextView(context)
-    var backgroundId = 0
+    private var backgroundId = -1
+    private var cloneId = -1
 
     init {
 //        layoutParams = ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -36,11 +37,11 @@ class TutorialLayout @JvmOverloads constructor(
         addView(some)
     }
 
-    fun setUpClone(position: IntArray, clone: View, aView: View) {
-        removeAllViews()
-        setUpCloneBackground(position, aView)
+    fun setUpClone(position: IntArray, clone: View) {
 
         clone.id = generateViewId()
+
+        cloneId = clone.id
 
         addView(clone)
 
@@ -53,6 +54,12 @@ class TutorialLayout @JvmOverloads constructor(
         cs.applyTo(this)
     }
 
+    fun setCloneWithBackground(position: IntArray, clone: View, aView: View) {
+        setUpCloneBackground(position, aView)
+
+        setUpClone(position, clone)
+    }
+
     fun setUpCloneBackground(position: IntArray, aView: View) {
         val card = DialogContainer(context)
         card.layoutParams = ViewGroup.LayoutParams(
@@ -61,6 +68,8 @@ class TutorialLayout @JvmOverloads constructor(
         )
 
         card.id = generateViewId()
+
+        backgroundId = card.id
 
         addView(card)
 
@@ -77,17 +86,30 @@ class TutorialLayout @JvmOverloads constructor(
     fun setUpCloneWithDialog(
         position: IntArray,
         clone: View,
+        dialogContent: View,
+        gravity: String,
+        dialogXOffsetDp: Float,
+        dialogYOffsetDp: Float,
+        originOffsetDp: Float
+    ) {
+        setUpClone(position, clone)
+
+        setUpDialog(dialogContent, gravity, dialogXOffsetDp, dialogYOffsetDp, originOffsetDp, position, true)
+    }
+
+    fun setUpCloneWithBackgroundAndDialog(
+        position: IntArray,
+        clone: View,
         aView: View,
         dialogContent: View,
         gravity: String,
         dialogXOffset: Float,
         dialogYOffsetDp: Float,
-        originOffsetDp: Float,
-        shouldClipToClone: Boolean
+        originOffsetDp: Float
     ) {
-        setUpClone(position, clone, aView)
+        setCloneWithBackground(position, clone, aView)
 
-        setUpDialog(dialogContent, gravity, dialogXOffset, dialogYOffsetDp, originOffsetDp, position, aView)
+        setUpDialog(dialogContent, gravity, dialogXOffset, dialogYOffsetDp, originOffsetDp, position, false)
     }
 
     // in gravity "top" xOffset is from the clone's first X edge to dialog's first x edge, yOffset is from clone's top edge to dialog's bottom edge
@@ -104,9 +126,12 @@ class TutorialLayout @JvmOverloads constructor(
         dialogYOffsetDp: Float,
         originOffsetDp: Float,
         position: IntArray,
-        aView: View,
         shouldClipToClone: Boolean
     ) {
+        if(shouldClipToClone && cloneId == -1 || !shouldClipToClone && backgroundId == -1) {
+            throw IllegalStateException("Set up background before displaying dialog")
+        }
+
         val dialogXOffsetPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
             dialogXOffsetDp,
@@ -122,6 +147,7 @@ class TutorialLayout @JvmOverloads constructor(
         val dialog = DialogContainer(context)
 
         dialog.id = generateViewId()
+
         dialog.layoutParams = FrameLayout.LayoutParams(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
@@ -129,8 +155,10 @@ class TutorialLayout @JvmOverloads constructor(
 
         addView(dialog)
 
+        val nodeToConstraintToId = if(shouldClipToClone) cloneId else backgroundId
+
         when(gravity) {
-            "top" -> {
+            "top", "bottom" -> {
                 val xMargin = position[0] + dialogXOffsetPx
                 val yMargin = dialogYOffsetPx
 
@@ -139,12 +167,40 @@ class TutorialLayout @JvmOverloads constructor(
 
                 dialog.addView(dialogContent)
 
-                val dialogXMargin = aView.width * dialogXOffsetDp
-                dialogCs.connect(dialog.id, ConstraintSet.LEFT, origin.id, ConstraintSet.LEFT, dialogXMargin.toInt())
-                dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, origin.id, ConstraintSet.TOP)
+                if (gravity == "top") {
+                    dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
+                    dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, nodeToConstraintToId, ConstraintSet.TOP, yMargin.toInt())
 
-                dialogCs.applyTo(this)
+                    dialogCs.applyTo(this)
+                } else {
+                    dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
+                    dialogCs.connect(dialog.id, ConstraintSet.TOP, nodeToConstraintToId, ConstraintSet.BOTTOM, yMargin.toInt())
+
+                    dialogCs.applyTo(this)
+                }
             }
+            "left", "right"-> {
+                val xMargin = dialogXOffsetPx
+                val yMargin = position[1] + dialogYOffsetPx
+
+                val dialogCs = ConstraintSet()
+                dialogCs.clone(this)
+
+                dialog.addView(dialogContent)
+
+                if (gravity == "left") {
+                    dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                    dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+
+                    dialogCs.applyTo(this)
+                } else {
+                    dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                    dialogCs.connect(dialog.id, ConstraintSet.LEFT, nodeToConstraintToId, ConstraintSet.RIGHT, xMargin.toInt())
+
+                    dialogCs.applyTo(this)
+                }
+            }
+            else -> throw IllegalArgumentException("Invalid gravity value")
         }
     }
 }
