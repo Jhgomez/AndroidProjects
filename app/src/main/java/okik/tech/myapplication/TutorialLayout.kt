@@ -61,7 +61,7 @@ class TutorialLayout @JvmOverloads constructor(
     }
 
     fun setUpCloneBackground(position: IntArray, aView: View) {
-        val card = DialogContainer(context)
+        val card = RoundContainer(context)
         card.layoutParams = ViewGroup.LayoutParams(
             aView.width + 60,
             aView.height + 60
@@ -75,7 +75,7 @@ class TutorialLayout @JvmOverloads constructor(
 
         val cs = ConstraintSet()
         cs.clone(this)
-//        card.setRenderEffect(RenderEffect.createBlurEffect(100f, 100f, Shader.TileMode.DECAL))
+
 
         cs.connect(card.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, position[0] - 30)
         cs.connect(card.id, ConstraintSet.TOP, id, ConstraintSet.TOP, position[1] - 30)
@@ -103,13 +103,14 @@ class TutorialLayout @JvmOverloads constructor(
         aView: View,
         dialogContent: View,
         gravity: String,
-        dialogXOffset: Float,
+        dialogXOffsetDp: Float,
         dialogYOffsetDp: Float,
-        originOffsetDp: Float
+        originOffsetDp: Float,
+        destinationOffsetDp: Float
     ) {
         setCloneWithBackground(position, clone, aView)
 
-        setUpDialog(dialogContent, gravity, dialogXOffset, dialogYOffsetDp, originOffsetDp, position, false)
+        setUpDialog(dialogContent, gravity, dialogXOffsetDp, dialogYOffsetDp, originOffsetDp, position, false)
     }
 
     // in gravity "top" xOffset is from the clone's first X edge to dialog's first x edge, yOffset is from clone's top edge to dialog's bottom edge
@@ -144,7 +145,7 @@ class TutorialLayout @JvmOverloads constructor(
             resources.displayMetrics
         )
 
-        val dialog = DialogContainer(context)
+        val dialog = RoundContainer(context)
 
         dialog.id = generateViewId()
 
@@ -152,6 +153,8 @@ class TutorialLayout @JvmOverloads constructor(
             FrameLayout.LayoutParams.WRAP_CONTENT,
             FrameLayout.LayoutParams.WRAP_CONTENT
         )
+
+        dialog.setPadding(30, 30, 30, 30)
 
         addView(dialog)
 
