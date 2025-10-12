@@ -239,14 +239,7 @@ class TutorialLayout @JvmOverloads constructor(
 
                     path.moveTo(startX, startY.toFloat())
 
-                    // this is why we need dialog content to always have a fixed value on the main axis
-                    val dialogWidthInPx = TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        dialogContent.layoutParams.width.toFloat(),
-                        resources.displayMetrics
-                    )
-
-                    val firstVertexX = dialog.x + dialogWidthInPx * destinationOffsetPercent
+                    val firstVertexX = position[0] + xMargin + dialogContent.layoutParams.width * destinationOffsetPercent
                     val firstVertexY = position[1] - yMargin
 
                     path.lineTo(firstVertexX, firstVertexY)
@@ -295,7 +288,20 @@ class TutorialLayout @JvmOverloads constructor(
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, nodeToConstraintToId, ConstraintSet.BOTTOM, yMargin.toInt())
 
+                        val firstVertexX = xMargin + dialogContent.layoutParams.width * destinationOffsetPercent
+                        val firstVertexY = position[1] + originalView.height + yMargin
+
+                        path.lineTo(firstVertexX, firstVertexY)
+
+                        val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
+                        val secondVertexY = firstVertexY
+
+                        path.lineTo(secondVertexX, secondVertexY)
+                        path.close()
+
                         dialogCs.applyTo(this)
+
+                        invalidate()
                     }
                 }
             }
