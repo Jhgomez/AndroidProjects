@@ -9,8 +9,9 @@ import android.widget.FrameLayout
 
 // this component is just a frame layout wrapped in a rounded corner shape, the difference
 // with a material card is that this one doesn't have "card elevation" and is intended to be passed
-// any view programmatically. It wraps its content automatically
-class DialogContainer @JvmOverloads constructor(
+// any view programmatically. It wraps its content automatically. Be aware you have to add padding to it
+// everytime you need
+class RoundContainer @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
@@ -27,7 +28,7 @@ class DialogContainer @JvmOverloads constructor(
 
         cornerRadius = 80f
 
-        setBackgroundColor(Color.TRANSPARENT)
+        setBackgroundColor(Color.TRANSPARENT) // custom viewgroups need this call otherwise they wont be visible
     }
 
     fun updateBackgroundPaint(paint: Paint) {
