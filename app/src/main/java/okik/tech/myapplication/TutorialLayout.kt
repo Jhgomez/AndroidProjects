@@ -100,7 +100,7 @@ class TutorialLayout @JvmOverloads constructor(
         setUpClone(position, clone)
 
         setUpDialog(
-            originalView = originalView,
+            viewToClipTo = originalView,
             dialogContent = dialogContent,
             gravity = gravity,
             dialogXOffsetDp = dialogXOffsetDp,
@@ -108,7 +108,6 @@ class TutorialLayout @JvmOverloads constructor(
             originOffsetPercent = originOffsetDp,
             destinationOffsetPercent = destinationOffsetDp,
             position = position,
-            shouldClipToClone = true,
             shouldCenterOnMainAxis = shouldCenterOnMainAxis
         )
     }
@@ -127,8 +126,11 @@ class TutorialLayout @JvmOverloads constructor(
     ) {
         setCloneWithBackground(position, clone, aView)
 
+        position[0] = position[0] - BACKGROUND_PADDING/2
+        position[1] = position[1] - BACKGROUND_PADDING/2
+
         setUpDialog(
-            originalView = aView,
+            viewToClipTo = findViewById(backgroundId),
             dialogContent = dialogContent,
             gravity = gravity,
             dialogXOffsetDp = dialogXOffsetDp,
@@ -136,14 +138,13 @@ class TutorialLayout @JvmOverloads constructor(
             originOffsetPercent = originOffsetDp,
             destinationOffsetPercent = destinationOffsetDp,
             position = position,
-            shouldClipToClone = false,
             shouldCenterOnMainAxis = shouldCenterOnMainAxis
         )
     }
 
     /**
-     * @param originalView, this is a reference to the view wiew we want to attach a dialog to. This is needed so we can effectively
-     * and dinamycally move the origin of the dialog
+     * @param viewToClipTo, this is a reference to the view view we want to attach a dialog to. This is needed so we can effectively
+     * and dynamically move the origin of the dialog
      * @param dialogContent this view should always have a fixed size, preferably in both axis(x and y), this way we can
      * effectively and dinamycally connect the view and the dialog by drawing a triangle
      * @param gravity in gravity "top", xOffset is from the clone's first X edge to dialog's first x edge, yOffset is
@@ -164,20 +165,16 @@ class TutorialLayout @JvmOverloads constructor(
      * @param shouldCenterOnMainAxis Main axis is X if gravity is "top" or "bottom". Main axis is Y if gravity is "left" or "right"
      */
     private fun setUpDialog(
-        originalView: View,
+        viewToClipTo: View,
         dialogContent: View,
         gravity: String,
         dialogXOffsetDp: Float,
         dialogYOffsetDp: Float,
         originOffsetPercent: Float,
         position: IntArray,
-        shouldClipToClone: Boolean,
         destinationOffsetPercent: Float,
         shouldCenterOnMainAxis: Boolean
     ) {
-        if(shouldClipToClone && cloneId == -1 || !shouldClipToClone && backgroundId == -1) {
-            throw IllegalStateException("Set up background before displaying dialog")
-        }
 
         // according to source code we should get window info by calling the below API instead of
         // `resources.displayMetrics.heightPixels` but actually the former is better as it subtracts
@@ -187,6 +184,9 @@ class TutorialLayout @JvmOverloads constructor(
         // info through the resources object in this context should be safe
 //        val winMetrics = (context.getSystemService(Context.WINDOW_SERVICE) as WindowManager).currentWindowMetrics
 //        winMetrics.bounds.height() == resources.displayMetrics.heightPixels  // this is false
+
+        val viewWidth = if (viewToClipTo.width <= 0) viewToClipTo.layoutParams.width else viewToClipTo.width
+        val viewHeight = if (viewToClipTo.height <= 0) viewToClipTo.layoutParams.height else viewToClipTo.height
 
         val dialogXOffsetPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -213,8 +213,6 @@ class TutorialLayout @JvmOverloads constructor(
 
         addView(dialog)
 
-        val nodeToConstraintToId = if(shouldClipToClone) cloneId else backgroundId
-
         when(gravity) {
             "top", "bottom" -> {
                 val xMargin = position[0] + dialogXOffsetPx
@@ -226,7 +224,7 @@ class TutorialLayout @JvmOverloads constructor(
                 dialog.addView(dialogContent)
 
                 if (gravity == "top") {
-                    val startX = position[0] + originalView.width * originOffsetPercent
+                    val startX = position[0] + viewWidth * originOffsetPercent
                     val startY = position[1]
 
                     path.moveTo(startX, startY.toFloat())
@@ -234,7 +232,7 @@ class TutorialLayout @JvmOverloads constructor(
                     if (shouldCenterOnMainAxis) {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
                         dialogCs.connect(dialog.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, nodeToConstraintToId, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, viewToClipTo.id, ConstraintSet.TOP, yMargin.toInt())
 
                         val horizontalCenter = resources.displayMetrics.widthPixels/2
 
@@ -258,7 +256,7 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, nodeToConstraintToId, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, viewToClipTo.id, ConstraintSet.TOP, yMargin.toInt())
 
                         val firstVertexX = xMargin + dialogContent.layoutParams.width * destinationOffsetPercent
                         val firstVertexY = startY - yMargin
@@ -276,15 +274,15 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     }
                 } else {
-                    val startX = position[0] + originalView.width * originOffsetPercent
-                    val startY = position[1] + originalView.height
+                    val startX = position[0] + viewWidth * originOffsetPercent
+                    val startY = position[1] + viewHeight
 
                     path.moveTo(startX, startY.toFloat())
 
                     if (shouldCenterOnMainAxis) {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
                         dialogCs.connect(dialog.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(dialog.id, ConstraintSet.TOP, nodeToConstraintToId, ConstraintSet.BOTTOM, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.TOP, viewToClipTo.id, ConstraintSet.BOTTOM, yMargin.toInt())
 
                         val horizontalCenter = resources.displayMetrics.widthPixels/2
 
@@ -308,7 +306,7 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(dialog.id, ConstraintSet.TOP, nodeToConstraintToId, ConstraintSet.BOTTOM, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.TOP, viewToClipTo.id, ConstraintSet.BOTTOM, yMargin.toInt())
 
                         val firstVertexX = xMargin + dialogContent.layoutParams.width * destinationOffsetPercent
                         val firstVertexY = startY + yMargin
@@ -338,14 +336,14 @@ class TutorialLayout @JvmOverloads constructor(
 
                 if (gravity == "left") {
                     val startX = position[0]
-                    val startY = position[1] + originalView.height * originOffsetPercent
+                    val startY = position[1] + viewHeight * originOffsetPercent
 
                     path.moveTo(startX.toFloat(), startY)
 
                     if (shouldCenterOnMainAxis) {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM, yMargin.toInt())
-                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, viewToClipTo.id, ConstraintSet.LEFT, xMargin.toInt())
 
                         val verticalCenter = resources.displayMetrics.heightPixels/2
                         var difference = verticalCenter - dialogContent.layoutParams.height/2 - DIALOG_PADDING_PX
@@ -368,7 +366,7 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, viewToClipTo.id, ConstraintSet.LEFT, xMargin.toInt())
 
                         val firstVertexX = startX - xMargin
                         val firstVertexY = yMargin + dialogContent.layoutParams.height * destinationOffsetPercent
@@ -386,15 +384,15 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     }
                 } else {
-                    val startX = position[0] + originalView.width
-                    val startY = position[1] + originalView.height * originOffsetPercent
+                    val startX = position[0] + viewWidth
+                    val startY = position[1] + viewHeight * originOffsetPercent
 
                     path.moveTo(startX.toFloat(), startY)
 
                     if (shouldCenterOnMainAxis) {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
                         dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.connect(dialog.id, ConstraintSet.LEFT, nodeToConstraintToId, ConstraintSet.RIGHT, xMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.LEFT, viewToClipTo.id, ConstraintSet.RIGHT, xMargin.toInt())
 
                         val verticalCenter = resources.displayMetrics.heightPixels/2
                         var difference = verticalCenter - dialogContent.layoutParams.height/2 - DIALOG_PADDING_PX
@@ -417,7 +415,7 @@ class TutorialLayout @JvmOverloads constructor(
                         invalidate()
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(dialog.id, ConstraintSet.LEFT, nodeToConstraintToId, ConstraintSet.RIGHT, xMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.LEFT, viewToClipTo.id, ConstraintSet.RIGHT, xMargin.toInt())
 
                         val firstVertexX = startX + xMargin
                         val firstVertexY = yMargin + dialogContent.layoutParams.height * destinationOffsetPercent
