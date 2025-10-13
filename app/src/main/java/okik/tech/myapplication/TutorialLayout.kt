@@ -22,7 +22,8 @@ class TutorialLayout @JvmOverloads constructor(
     private var backgroundId = -1
     private var cloneId = -1
     private val DIALOG_PADDING_PX = 30
-    private val TRIANGLE_SPACING_PX = 125
+    private val TRIANGLE_SPACING_PX = 150
+    private val BACKGROUND_PADDING = 60
 
     init {
 //        layoutParams = ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
@@ -64,8 +65,8 @@ class TutorialLayout @JvmOverloads constructor(
     fun setUpCloneBackground(position: IntArray, aView: View) {
         val card = RoundContainer(context)
         card.layoutParams = ViewGroup.LayoutParams(
-            aView.width + 60,
-            aView.height + 60
+            aView.width + BACKGROUND_PADDING,
+            aView.height + BACKGROUND_PADDING
         )
 
         card.id = generateViewId()
@@ -78,8 +79,8 @@ class TutorialLayout @JvmOverloads constructor(
         cs.clone(this)
 
 
-        cs.connect(card.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, position[0] - 30)
-        cs.connect(card.id, ConstraintSet.TOP, id, ConstraintSet.TOP, position[1] - 30)
+        cs.connect(card.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, position[0] - BACKGROUND_PADDING/2)
+        cs.connect(card.id, ConstraintSet.TOP, id, ConstraintSet.TOP, position[1] - BACKGROUND_PADDING/2)
 
         cs.applyTo(this)
     }
