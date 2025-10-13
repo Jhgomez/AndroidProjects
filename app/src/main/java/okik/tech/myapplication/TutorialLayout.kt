@@ -338,10 +338,54 @@ class TutorialLayout @JvmOverloads constructor(
                 dialog.addView(dialogContent)
 
                 if (gravity == "left") {
-                    dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                    dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+                    val startX = position[0]
+                    val startY = position[1] + originalView.height * originOffsetPercent
 
-                    dialogCs.applyTo(this)
+                    path.moveTo(startX.toFloat(), startY.toFloat())
+
+                    if (shouldCenterOnMainAxis) {
+                        dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+
+                        val verticalCenter = resources.displayMetrics.heightPixels/2
+                        var difference = verticalCenter - dialogContent.layoutParams.height/2
+
+                        difference = if (difference < 0) 0 else difference
+
+                        val firstVertexX = position[0] - xMargin
+                        val firstVertexY = difference + dialogContent.layoutParams.height * destinationOffsetPercent
+
+                        path.lineTo(firstVertexX, firstVertexY)
+
+                        val secondVertexX = firstVertexX
+                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
+
+                        path.lineTo(secondVertexX, secondVertexY)
+                        path.close()
+
+                        dialogCs.applyTo(this)
+
+                        invalidate()
+                    } else {
+                        dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, nodeToConstraintToId, ConstraintSet.LEFT, xMargin.toInt())
+
+                        val firstVertexX = position[0] - xMargin
+                        val firstVertexY = yMargin + dialogContent.layoutParams.height * destinationOffsetPercent
+
+                        path.lineTo(firstVertexX, firstVertexY)
+
+                        val secondVertexX = firstVertexX
+                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
+
+                        path.lineTo(secondVertexX, secondVertexY)
+                        path.close()
+
+                        dialogCs.applyTo(this)
+
+                        invalidate()
+                    }
                 } else {
                     dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
                     dialogCs.connect(dialog.id, ConstraintSet.LEFT, nodeToConstraintToId, ConstraintSet.RIGHT, xMargin.toInt())
