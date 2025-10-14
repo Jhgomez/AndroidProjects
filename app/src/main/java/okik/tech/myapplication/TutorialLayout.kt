@@ -26,7 +26,6 @@ class TutorialLayout @JvmOverloads constructor(
     private val BACKGROUND_PADDING = 60
 
     init {
-//        layoutParams = ViewGroup.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
         id = generateViewId()
 
@@ -115,7 +114,7 @@ class TutorialLayout @JvmOverloads constructor(
     fun setUpCloneWithBackgroundAndDialog(
         position: IntArray,
         clone: View,
-        aView: View,
+        originalView: View,
         dialogContent: View,
         gravity: String,
         dialogXOffsetDp: Float,
@@ -124,7 +123,7 @@ class TutorialLayout @JvmOverloads constructor(
         destinationOffsetDp: Float,
         shouldCenterOnMainAxis: Boolean
     ) {
-        setCloneWithBackground(position, clone, aView)
+        setCloneWithBackground(position, clone, originalView)
 
         position[0] = position[0] - BACKGROUND_PADDING/2
         position[1] = position[1] - BACKGROUND_PADDING/2
@@ -203,11 +202,6 @@ class TutorialLayout @JvmOverloads constructor(
         val dialog = RoundContainer(context)
 
         dialog.id = generateViewId()
-
-        dialog.layoutParams = LayoutParams(
-            LayoutParams.WRAP_CONTENT,
-            LayoutParams.WRAP_CONTENT
-        )
 
         dialog.setPadding(DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX)
 
