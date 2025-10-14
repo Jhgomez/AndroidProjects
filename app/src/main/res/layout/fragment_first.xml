@@ -30,16 +30,6 @@
             app:layout_constraintTop_toBottomOf="@id/button_first"
             tools:listitem="@layout/recycler_item"
             />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            app:layout_constraintTop_toTopOf="parent"
-            android:paddingStart="66dp"
-            android:paddingEnd="0dp"
-            app:layout_constraintStart_toStartOf="parent"
-            android:text="@string/lorem_ipsum"
-            />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <View
