@@ -37,6 +37,16 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     val paint: Paint = Paint()
     val path: Path = Path()
 
+    init {
+        paint.color = Color.WHITE
+        paint.alpha = 100
+        paint.style = Paint.Style.FILL
+        paint.strokeWidth = 8f
+        paint.isAntiAlias = true
+
+        setBackgroundColor(Color.TRANSPARENT)
+    }
+
     fun focusView(
         view: View,
         backgroundPadding: Byte?,
@@ -521,6 +531,12 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         // if no view is required to be focus just do
         val invalidated = super.drawChild(canvas, child, drawingTime)
         return invalidated
+    }
+
+    override fun draw(canvas: Canvas) {
+        super.draw(canvas)
+
+        canvas.drawPath(path, paint)
     }
 }
 
