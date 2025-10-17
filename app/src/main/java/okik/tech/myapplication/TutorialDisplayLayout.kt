@@ -103,7 +103,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         dialogHolder = ConstraintLayout(context)
         dialogHolder!!.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
         dialogHolder!!.visibility = GONE
-        dialogHolder!!.setBackgroundColor(Color.TRANSPARENT)
+        dialogHolder!!.setBackgroundColor(Color.BLUE)
         dialogHolder!!.id = generateViewId()
 
         val referenceView = View(context)
@@ -118,18 +118,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         constraintSet.connect(referenceView.id, ConstraintSet.LEFT, dialogHolder!!.id, ConstraintSet.LEFT)
 
         constraintSet.applyTo(dialogHolder)
-
-        // constraints and margins will be set up later in the flow
-        val dialogContainer = RoundContainer(context)
-        dialogContainer.id = generateViewId()
-        dialogContainer.layoutParams = ConstraintLayout.LayoutParams(
-            ConstraintLayout.LayoutParams.WRAP_CONTENT,
-            ConstraintLayout.LayoutParams.WRAP_CONTENT
-        )
-
-        dialogContainer.setPadding(DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX)
-
-        dialogHolder!!.addView(dialogContainer)
 
         addView(dialogHolder)
     }
@@ -185,8 +173,20 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             resources.displayMetrics
         )
 
-        // dialog container is always index 1
-        val dialogContainer = dialogHolder!!.getChildAt(1) as RoundContainer
+        // constraints and margins will be set up later in the flow
+        val dialogContainer = RoundContainer(context)
+        dialogContainer.id = generateViewId()
+//        dialogContainer.layoutParams = ConstraintLayout.LayoutParams(
+//            ConstraintLayout.LayoutParams.WRAP_CONTENT,
+//            ConstraintLayout.LayoutParams.WRAP_CONTENT
+//        )
+
+        dialogContainer.setPadding(DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX, DIALOG_PADDING_PX)
+
+        dialogHolder!!.addView(dialogContainer)
+
+//        // dialog container is always index 1
+//        val dialogContainer = dialogHolder!!.getChildAt(1) as RoundContainer
 
         val dialogCs = ConstraintSet()
         dialogCs.clone(dialogHolder)
@@ -199,23 +199,20 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                 val yMargin = currentLocation!![1] + dialogYOffsetPx
 
                 dialogContainer.addView(dialogContent)
-
+//
                 if (gravity == Gravity.START) {
                     val startX = currentLocation!![0]
                     val startY = currentLocation!![1] + viewHeight * originOffsetPercent
-
+//
                     path.moveTo(startX.toFloat(), startY)
-
+//
                     if (shouldCenterOnMainAxis) {
-
-
-//                        dialogCs.setHorizontalBias(dialogContainer.id, 1f)
-                        dialogCs.connect(dialogContainer.id, ConstraintSet.RIGHT, viewToClipTo.id, ConstraintSet.LEFT, 300)
+                        dialogCs.connect(dialogContainer.id, ConstraintSet.TOP, dialogHolder!!.id, ConstraintSet.TOP)
+                        dialogCs.connect(dialogContainer.id, ConstraintSet.BOTTOM, dialogHolder!!.id, ConstraintSet.BOTTOM)
+                        dialogCs.connect(dialogContainer.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.setHorizontalBias(dialogContainer.id, 1f)
                         dialogCs.connect(dialogContainer.id, ConstraintSet.LEFT, dialogHolder!!.id, ConstraintSet.LEFT)
-
-                        dialogCs.connect(dialogContainer.id, ConstraintSet.TOP, dialogHolder!!.id, ConstraintSet.TOP, yMargin.toInt())
-//                        dialogCs.connect(dialogContainer.id, ConstraintSet.BOTTOM, dialogHolder!!.id, ConstraintSet.BOTTOM)
-
+//
                         val verticalCenter = resources.displayMetrics.heightPixels/2
                         var difference = verticalCenter - dialogContent.layoutParams.height/2 - DIALOG_PADDING_PX
 
@@ -239,11 +236,12 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                         invalidate()
                     } else {
                         dialogCs.connect(dialogContainer.id, ConstraintSet.TOP, dialogHolder!!.id, ConstraintSet.TOP, yMargin.toInt())
-//                        dialogCs.setHorizontalBias(dialogContainer.id, 1f)
-                        dialogCs.connect(dialogContainer.id, ConstraintSet.LEFT, dialogHolder!!.id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.setHorizontalBias(dialogContainer.id, 1f)
+                        dialogCs.connect(dialogContainer.id, ConstraintSet.LEFT, dialogHolder!!.id, ConstraintSet.LEFT)
                         dialogCs.connect(
                             dialogContainer.id, ConstraintSet.RIGHT,
                             referenceView.id, ConstraintSet.LEFT,
+                            xMargin.toInt()
                         )
 
                         val firstVertexX = startX - xMargin
@@ -295,7 +293,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         params.width = view.width
         params.height = view.height
 
-//        referenceView.setBackgroundColor(Color.TRANSPARENT)
+        referenceView.setBackgroundColor(Color.GREEN)
     }
 
     override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
