@@ -8,6 +8,6 @@
         <attr name="Orientation" format="string" />
     </declare-styleable>
     <declare-styleable name="RoundedShape">
-        <attr name="cornerRadius" format="float"/>
+        <attr name="shapeCornerRadius" format="float"/>
     </declare-styleable>
 </resources>

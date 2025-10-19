@@ -18,7 +18,7 @@ class RoundedShape @JvmOverloads constructor(
 
         try {
             radius =
-                passAttrs.getFloat(R.styleable.RoundedShape_cornerRadius, 8f)
+                passAttrs.getFloat(R.styleable.RoundedShape_shapeCornerRadius, 8f)
 
        } finally {
             passAttrs.recycle()
