@@ -36,56 +36,142 @@ import androidx.annotation.RequiresApi
  * as in original outer area
  * @param outerAreaEffect any render effect applied to surrounding area
  * @param overlayParams the params to be applied to overlay, if null it will match parent automatically
- * @param overlayPaint if null no overlay will be painted, otherwise an overlay on the full screen
+ * @param overlayColor if null no overlay will be painted, otherwise an overlay on the full screen
  * will be painted using this paint object
  */
 
 @RequiresApi(Build.VERSION_CODES.S)
 class FocusArea private constructor(
-    view: View,
-    viewLocation: IntArray,
-    surroundingThickness: Float,
-    surroundingThicknessEffect: RenderEffect?,
-    outerAreaEffect: RenderEffect?,
-    overlayParams: LayoutParams,
-    overlayPaint: Paint
+    val view: View,
+    val viewLocation: IntArray,
+    val surroundingThickness: SurroundingThickness,
+    val surroundingThicknessEffect: RenderEffect?,
+    val roundedCornerSurrounding: RoundedCornerSurrounding?,
+    val outerAreaEffect: RenderEffect?,
+    val overlayParams: LayoutParams,
+    val overlayColor: Int,
+    val overlayAlpha: Float
 ){
+
+    /**
+     * All params are in DP and will be converter to PX automatically
+     */
+    data class SurroundingThickness(
+        val top: Float,
+        val bottom: Float,
+        val start: Float,
+        val end: Float
+    )
+
+    /**
+     * if this object is passed to a focus area object it will rectangle behind the view the user wants
+     * to add visual focus on but surrounding area will not be an exact copy of the actual surrounding,
+     * and instead this rounded corner surrounding will be created on top of any effect applied to
+     * the outer area(outside the focus view area)
+     */
+    data class RoundedCornerSurrounding(
+        val paint: Paint,
+        val cornerRadius: Short,
+        val innerPadding: InnerPadding
+    )
+
+    /**
+     * Lets you add padding to rounded corner surrounding, useful when applying overlay effects
+     * to rounded corner surrounding area
+     */
+    data class InnerPadding(
+        val top: Float,
+        val bottom: Float,
+        val start: Float,
+        val end: Float
+    )
 
     class Builder {
         private var view: View? = null
         private var viewLocation: IntArray? = null
-        private var surroundingThickness: Byte = 0
+        private var surroundingThickness: SurroundingThickness? = null
         private var surroundingThicknessEffect: RenderEffect? = null
+        private var roundedCornerSurrounding: RoundedCornerSurrounding? = null
         private var outerAreaEffect: RenderEffect? = null
         private var overlayParams: LayoutParams? = null
-        private var overlayPaint: Paint? = null
+        private var overlayColor: Int = Color.GRAY
+        private var overlayAlpha: Float = 0.4f
 
-        fun setView(view: View) {
+        fun setView(view: View): Builder {
             this.view = view
+            return this
         }
 
-        fun setViewLocation(viewLocation: IntArray) {
+        fun setViewLocation(viewLocation: IntArray): Builder {
             this.viewLocation = viewLocation
+            return this
         }
 
-        fun setSurroundingThickness(surroundingThickness: Byte) {
+        /**
+         * @param surroundingThickness value is considered to be DP(it will be converted to PX automatically)
+         */
+        fun setSurroundingThickness(surroundingThickness: SurroundingThickness): Builder {
             this.surroundingThickness = surroundingThickness
+            return this
         }
 
-        fun setSurroundingThicknessEffect(surroundingThicknessEffect: RenderEffect) {
+        /**
+         * @param surroundingThicknessEffect the effect to be applied to the surrounding area. There
+         * is a difference in what happens when a rounded corner surrounding is specified and when not,
+         * but first you have to be aware that this is related to the effect applied to the outer area,
+         * when no rounded corner specified you automatically get an exact copy of the surrounding area
+         * which size is determined by the specified thickness, if you also specify the effect to be
+         * applied(with this method), then it is applied to that exact part of the original view, while
+         * the outer area is applied the other effect(if any effect was applied/passed in the builder
+         * with method #setOuterAreaEffect) without affecting surrounding area but the limitation is that
+         * it can not have rounded corners, it only supports sharp edges(no rounded). The other scenario
+         * is when you specify a rounded surrounding in which case the outer area effect is also applied to the
+         * area below rounded surrounding view, that is because the rounded corner surrounding is
+         * literally draw on top of the original view, which again, might be affected by the specified outer
+         * area effect, but the rounded area at the same time can have any effect applied, note that
+         * the rounded area effect is not actually affecting the views below it, it is actually just
+         * being draw on top of it
+         */
+        fun setSurroundingThicknessEffect(surroundingThicknessEffect: RenderEffect): Builder {
             this.surroundingThicknessEffect = surroundingThicknessEffect
+            return this
         }
 
-        fun setOuterAreaEffect(outerAreaEffect: RenderEffect?) {
+        fun setRoundedCornerSurrounding(roundedCornerSurrounding: RoundedCornerSurrounding): Builder {
+            this.roundedCornerSurrounding = roundedCornerSurrounding
+            return this
+        }
+
+        fun setOuterAreaEffect(outerAreaEffect: RenderEffect?): Builder {
             this.outerAreaEffect = outerAreaEffect
+            return this
         }
 
-        fun setOverlayParams(overlayParams: LayoutParams) {
+        fun setOverlayParams(overlayParams: LayoutParams): Builder {
             this.overlayParams = overlayParams
+            return this
         }
 
-        fun setOverlayPaint(overlayPaint: Paint) {
-            this.overlayPaint= overlayPaint
+        fun setOverlayColor(overlayColor: Int): Builder {
+            this.overlayColor = overlayColor
+            return this
+        }
+
+        /**
+         * @param overlayAlpha values from 0 to 1 where 0 is fully transparent and 1 is fully opaque
+         */
+        fun setOverlayAlpha(overlayAlpha: Float): Builder {
+            this.overlayAlpha = overlayAlpha
+            return this
+        }
+
+        // should only be called in the build method
+        private fun dpToPx(dp: Float): Float {
+            return TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                dp.toFloat(),
+                this.view!!.resources.displayMetrics
+            )
         }
 
 
@@ -108,6 +194,17 @@ class FocusArea private constructor(
                 throw IllegalStateException("Location can only contain two values, x and y")
             }
 
+            if (surroundingThickness == null) {
+                surroundingThickness = SurroundingThickness(0f, 0f, 0f, 0f)
+            } else {
+                surroundingThickness = SurroundingThickness(
+                    dpToPx(surroundingThickness!!.top),
+                    dpToPx(surroundingThickness!!.bottom),
+                    dpToPx(surroundingThickness!!.start),
+                    dpToPx(surroundingThickness!!.end)
+                )
+            }
+
             if (overlayParams == null) {
                 overlayParams = FrameLayout.LayoutParams(
                     FrameLayout.LayoutParams.MATCH_PARENT,
@@ -115,29 +212,29 @@ class FocusArea private constructor(
                 )
             }
 
-            if (overlayPaint == null) {
-                overlayPaint = Paint()
-
-                overlayPaint!!.color = Color.WHITE
-                overlayPaint!!.alpha = 100
+            if (roundedCornerSurrounding != null) {
+                roundedCornerSurrounding = RoundedCornerSurrounding(
+                    roundedCornerSurrounding!!.paint,
+                    roundedCornerSurrounding!!.cornerRadius,
+                    InnerPadding(
+                        dpToPx(roundedCornerSurrounding!!.innerPadding.top),
+                        dpToPx(roundedCornerSurrounding!!.innerPadding.bottom),
+                        dpToPx(roundedCornerSurrounding!!.innerPadding.start),
+                        dpToPx(roundedCornerSurrounding!!.innerPadding.end),
+                    )
+                )
             }
 
             return FocusArea(
                 view!!,
                 viewLocation!!,
-                if (surroundingThickness > 0) {
-                    TypedValue.applyDimension(
-                        TypedValue.COMPLEX_UNIT_DIP,
-                        surroundingThickness.toFloat(),
-                        view!!.resources.displayMetrics
-                    )
-                } else {
-                    0f
-                },
+                surroundingThickness!!,
                 surroundingThicknessEffect,
+                roundedCornerSurrounding,
                 outerAreaEffect,
                 overlayParams!!,
-                overlayPaint!!,
+                overlayColor,
+                overlayAlpha
             )
         }
     }
