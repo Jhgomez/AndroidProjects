@@ -12,11 +12,14 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.view.setMargins
+import androidx.core.view.setPadding
 
 
 /**
@@ -125,27 +128,35 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                         // a copy of it and then another copy just or the view user wants to add focus on
                         // but if no effect added to this focus area there is no need
                         if (fa.surroundingThicknessEffect != null) {
-                            if (fa.surroundingThickness > 0) {
+                            if (focusArea!!.surroundingThickness.top > 0
+                                || focusArea!!.surroundingThickness.bottom > 0
+                                || focusArea!!.surroundingThickness.start > 0
+                                || focusArea!!.surroundingThickness.end > 0
+                            ) {
+
                                 focusedContentCopy.setRenderEffect(fa.surroundingThicknessEffect)
+
+                                val surroundingWidth = focusWidth + fa.surroundingThickness.start + fa.surroundingThickness.end
+                                val surroundingHeight = focusHeight + fa.surroundingThickness.top + fa.surroundingThickness.bottom
 
                                 focusedContentCopy.setPosition(
                                     0,
                                     0,
-                                    focusWidth + fa.surroundingThickness * 2,
-                                    focusHeight + fa.surroundingThickness * 2
+                                    surroundingWidth.toInt(),
+                                    surroundingHeight.toInt()
                                 )
 
                                 focusedContentCopy.translationX =
-                                    translationX - fa.surroundingThickness
+                                    translationX - fa.surroundingThickness.start
                                 focusedContentCopy.translationY =
-                                    translationY - fa.surroundingThickness
+                                    translationY - fa.surroundingThickness.top
 
                                 val focusAreaCopyRecordingCanvas =
                                     focusedContentCopy.beginRecording()
 
                                 focusAreaCopyRecordingCanvas.translate(
-                                    canvasTranslationX + fa.surroundingThickness,
-                                    canvasTranslationY + fa.surroundingThickness
+                                    canvasTranslationX + fa.surroundingThickness.start,
+                                    canvasTranslationY + fa.surroundingThickness.top
                                 )
 
                                 focusAreaCopyRecordingCanvas.drawRenderNode(contentCopy)
@@ -155,14 +166,14 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                         } else {
                             // if no effect and no rounded corner surrounding then make the copy
                             // the correct size
-                            focusWidth += fa.surroundingThickness * 2
-                            focusHeight += fa.surroundingThickness * 2
+                            focusWidth += fa.surroundingThickness.start.toInt() + fa.surroundingThickness.end.toInt()
+                            focusHeight += fa.surroundingThickness.top.toInt() + fa.surroundingThickness.bottom.toInt()
 
-                            translationX -= fa.surroundingThickness
-                            translationY -= fa.surroundingThickness
+                            translationX -= fa.surroundingThickness.start
+                            translationY -= fa.surroundingThickness.top
 
-                            canvasTranslationX += fa.surroundingThickness
-                            canvasTranslationY += fa.surroundingThickness
+                            canvasTranslationX += fa.surroundingThickness.start
+                            canvasTranslationY += fa.surroundingThickness.top
                         }
                     }
 
@@ -226,13 +237,41 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                     // at 2 is always a rounded view we set up as requested
                     if (childCount > 2) {
                         (getChildAt(2) as RoundedShape).apply {
+                            val shapeWidth = focusArea!!.view.width +
+                                    focusArea!!.surroundingThickness.start +
+                                    focusArea!!.surroundingThickness.end
+
+                            val shapeHeight = focusArea!!.view.height +
+                                    focusArea!!.surroundingThickness.top +
+                                    focusArea!!.surroundingThickness.bottom
+
+                            layoutParams = LayoutParams(shapeWidth.toInt(), shapeHeight.toInt())
+
+//                            (layoutParams as MarginLayoutParams).setMargins(focusArea!!.roundedCornerSurrounding!!.marginEnd.toInt())
+//                            this.invalidate()
+
+                            this.setPadding(
+                                focusArea!!.roundedCornerSurrounding!!.innerPadding.start.toInt(),
+                                focusArea!!.roundedCornerSurrounding!!.innerPadding.top.toInt(),
+                                focusArea!!.roundedCornerSurrounding!!.innerPadding.end.toInt(),
+                                focusArea!!.roundedCornerSurrounding!!.innerPadding.bottom.toInt()
+                            )
+
                             setPaint(focusArea!!.roundedCornerSurrounding!!.paint)
                             setRadius(focusArea!!.roundedCornerSurrounding!!.cornerRadius.toFloat())
+                            // this effect actually may be useless here, consider passing a null value
+                            // as when applied to this view it doesn't affect the views below(that is just
+                            // android rendering works)
+                            setRenderEffect(focusArea!!.surroundingThicknessEffect)
 
-                            val xLocation = focusArea!!.viewLocation[0] - focusArea!!.surroundingThickness
+                            val xLocation = focusArea!!.viewLocation[0] -
+                                    focusArea!!.surroundingThickness.start
+
                             translationX = translationX - (translationX - xLocation)
+//
+                            val yLocation = focusArea!!.viewLocation[1] -
+                                    focusArea!!.surroundingThickness.top
 
-                            val yLocation = focusArea!!.viewLocation[1] - focusArea!!.surroundingThickness
                             translationY = translationY - (translationY - yLocation)
 
                             visibility = VISIBLE
@@ -243,7 +282,11 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                     }
                 } else {
                     if (focusArea!!.surroundingThicknessEffect != null) {
-                        if (focusArea!!.surroundingThickness > 0) {
+                        if (focusArea!!.surroundingThickness.top > 0
+                            || focusArea!!.surroundingThickness.bottom > 0
+                            || focusArea!!.surroundingThickness.start > 0
+                            || focusArea!!.surroundingThickness.end > 0
+                        ) {
                             canvas.drawRenderNode(focusedContentCopy)
                             canvas.drawRenderNode(focusedContent)
                         } else {
