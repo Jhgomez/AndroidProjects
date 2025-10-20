@@ -581,8 +581,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                                     focusedContentCopy.beginRecording()
 
                                 focusAreaCopyRecordingCanvas.translate(
-                                    canvasTranslationX - fa.surroundingThickness,
-                                    canvasTranslationY - fa.surroundingThickness
+                                    canvasTranslationX + fa.surroundingThickness,
+                                    canvasTranslationY + fa.surroundingThickness
                                 )
 
                                 focusAreaCopyRecordingCanvas.drawRenderNode(contentCopy)
