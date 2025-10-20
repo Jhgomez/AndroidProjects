@@ -598,8 +598,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                             translationX -= fa.surroundingThickness
                             translationY -= fa.surroundingThickness
 
-                            canvasTranslationX -= fa.surroundingThickness
-                            canvasTranslationY -= fa.surroundingThickness
+                            canvasTranslationX += fa.surroundingThickness
+                            canvasTranslationY += fa.surroundingThickness
                         }
                     }
 
