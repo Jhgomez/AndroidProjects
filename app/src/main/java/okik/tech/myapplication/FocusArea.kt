@@ -94,8 +94,8 @@ class FocusArea private constructor(
         private var roundedCornerSurrounding: RoundedCornerSurrounding? = null
         private var outerAreaEffect: RenderEffect? = null
         private var overlayParams: LayoutParams? = null
-        private var overlayColor: Int = Color.GRAY
-        private var overlayAlpha: Float = 0.4f
+        private var overlayColor: Int = Color.TRANSPARENT
+        private var overlayAlpha: Float = 0.0f
 
         fun setView(view: View): Builder {
             this.view = view

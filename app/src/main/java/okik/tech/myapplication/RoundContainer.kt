@@ -34,6 +34,7 @@ class RoundContainer @JvmOverloads constructor(
     fun updateBackgroundPaint(paint: Paint) {
         this.paint = paint
         invalidate()
+
     }
 
     fun updateCornerRadius(radius: Float) {
@@ -44,6 +45,7 @@ class RoundContainer @JvmOverloads constructor(
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
 
+        canvas.drawLine(0f, 0f, 350f, 2000f, paint)
         // Draw the rounded rectangle
         canvas.drawRoundRect(0f, 0f, width.toFloat(), height.toFloat(), cornerRadius, cornerRadius, paint)
     }

@@ -1,5 +1,6 @@
 package okik.tech.myapplication
 
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
@@ -23,6 +24,7 @@ class MyAdapter(private val itemList: List<Int>) : RecyclerView.Adapter<MyAdapte
 
     class ViewHolder(private val binding: RecyclerItemBinding): RecyclerView.ViewHolder(binding.root) {
         fun bind(number: Int) {
+//            binding.cardView.setBackgroundColor(Color.TRANSPARENT)
             binding.numero.text = number.toString()
         }
     }

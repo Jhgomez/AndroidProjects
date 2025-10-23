@@ -5,7 +5,10 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RecordingCanvas
 import android.graphics.RenderNode
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -17,6 +20,8 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
+import androidx.core.graphics.ColorUtils
+import androidx.core.graphics.toColor
 import okik.tech.myapplication.databinding.DialogContentBinding
 
 
@@ -35,6 +40,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     private val contentWithEffect = RenderNode("BlurredContent")
     private val focusedContent = RenderNode("FocusContent")
     private val focusedContentCopy = RenderNode("FocusContentCopy")
+    private lateinit var focusAreaCopyRecordingCanvas: RecordingCanvas
 
     val paint: Paint = Paint()
 
@@ -139,7 +145,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         )
 
         // view at index 2
-        val focusSurrounding = RoundedShape(context)
+        val focusSurrounding = RoundContainerTwo(context)
         focusSurrounding.id = generateViewId()
         focusSurrounding.visibility = GONE
 
@@ -166,6 +172,10 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                 contentWithEffect.setPosition(0, 0, width, height)
                 val contentWithEffectRecordingCanvas = contentWithEffect.beginRecording()
                 contentWithEffectRecordingCanvas.drawRenderNode(contentCopy)
+
+                val overlayColor = ColorUtils.setAlphaComponent(fa.overlayColor, 100)
+                contentWithEffectRecordingCanvas.drawColor(overlayColor)
+
                 contentWithEffect.endRecording()
 
                 // draw the applied effect to content to canvas of custom layout
@@ -186,7 +196,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                     // here is where we add the surrounding area thickness as a square which is a
                     // exact copy of the actual surrounding but, again, note that its limitation is
                     // that the surrounding area shape can only be a square
-                    if (fa.roundedCornerSurrounding == null) {
+//                    if (fa.roundedCornerSurrounding == null) {
                         // if user wants to apply an effect to this surrounding area we need to make
                         // a copy of it and then another copy just or the view user wants to add focus on
                         // but if no effect added to this focus area there is no need
@@ -214,8 +224,10 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                                 focusedContentCopy.translationY =
                                     translationY - fa.surroundingThickness.top
 
-                                val focusAreaCopyRecordingCanvas =
+                                focusAreaCopyRecordingCanvas =
                                     focusedContentCopy.beginRecording()
+
+                                (fa.view.context as Activity).window.decorView.background.draw(focusAreaCopyRecordingCanvas)
 
                                 focusAreaCopyRecordingCanvas.translate(
                                     canvasTranslationX + fa.surroundingThickness.start,
@@ -224,7 +236,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
                                 focusAreaCopyRecordingCanvas.drawRenderNode(contentCopy)
 
-                                focusedContentCopy.endRecording()
+//                                focusedContentCopy.endRecording()
                             }
                         } else {
                             // if no effect and no rounded corner surrounding then make the copy
@@ -238,7 +250,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                             canvasTranslationX += fa.surroundingThickness.start
                             canvasTranslationY += fa.surroundingThickness.top
                         }
-                    }
+//                    }
 
                     focusedContent.setPosition(
                         0,
@@ -267,7 +279,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
                     // child at 1 is always the overlay
                     getChildAt(1).apply {
-                        alpha = fa.overlayAlpha
+                        alpha = 0f
                         setBackgroundColor(fa.overlayColor)
                         visibility = VISIBLE // this triggers a call to drawChild
                     }
@@ -300,7 +312,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                         // then draw the plain copy on top, this is what creates the visual focus, child
                         // at 2 is always a rounded view we set up as requested
                         if (childCount > 2) {
-                            (getChildAt(2) as RoundedShape).apply {
+                            val surrounding = getChildAt(2)
+                            (surrounding as RoundContainerTwo).apply {
                                 val shapeWidth = fa.view.width +
                                         fa.surroundingThickness.start +
                                         fa.surroundingThickness.end
@@ -314,19 +327,46 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 //                            (layoutParams as MarginLayoutParams).setMargins(focusArea!!.roundedCornerSurrounding!!.marginEnd.toInt())
 //                            this.invalidate()
 
-                                this.setPadding(
-                                    fa.roundedCornerSurrounding!!.innerPadding.start.toInt(),
-                                    fa.roundedCornerSurrounding!!.innerPadding.top.toInt(),
-                                    fa.roundedCornerSurrounding!!.innerPadding.end.toInt(),
-                                    fa.roundedCornerSurrounding!!.innerPadding.bottom.toInt()
-                                )
+                                if (fa.roundedCornerSurrounding.cornerRadius > 0) {
+                                    val n = fa.roundedCornerSurrounding.cornerRadius.toFloat()
 
-                                setPaint(fa.roundedCornerSurrounding!!.paint)
-                                setRadius(fa.roundedCornerSurrounding!!.cornerRadius.toFloat())
+                                    val roundShape = RoundRectShape(
+                                        floatArrayOf(n, n, n, n, n, n, n ,n),
+//            RectF(0f, 0f, 100f, 100f),
+                                        null,
+                                        null
+                                    )
+
+                                    val shapeDrawable = ShapeDrawable(roundShape)
+
+                                    surrounding.setEffectHolderBackgroundDrawable(shapeDrawable)
+
+                                    // TODO change "setEffectHolderBackgroundPadding" to accept four padding values
+                                    surrounding.setEffectHolderBackgroundPadding(fa.roundedCornerSurrounding.innerPadding.end.toInt())
+
+                                    val aPaint = Paint()
+                                    aPaint.color = Color.BLUE
+                                    aPaint.alpha = 30
+                                    aPaint.style = Paint.Style.FILL
+                                    surrounding.setEffectHolderBackgroundPaint(aPaint)
+                                }
+
+//                                this.setPadding(
+//                                    fa.roundedCornerSurrounding!!.innerPadding.start.toInt(),
+//                                    fa.roundedCornerSurrounding!!.innerPadding.top.toInt(),
+//                                    fa.roundedCornerSurrounding!!.innerPadding.end.toInt(),
+//                                    fa.roundedCornerSurrounding!!.innerPadding.bottom.toInt()
+//                                )
+
+//                                not using the roundedContainer view anymore
+//                                setPaint(fa.roundedCornerSurrounding!!.paint)
+//                                setRadius(fa.roundedCornerSurrounding!!.cornerRadius.toFloat())
+
+                                // """the effect is not applied to focus area view itself"""
                                 // this effect actually may be useless here, consider passing a null value
                                 // as when applied to this view it doesn't affect the views below(that is just
                                 // android rendering works)
-                                setRenderEffect(fa.surroundingThicknessEffect)
+//                                setRenderEffect(fa.surroundingThicknessEffect)
 
                                 val xLocation = fa.viewLocation[0] -
                                         fa.surroundingThickness.start
@@ -372,7 +412,15 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             // render on canvas rounded background and then the view to focus
             if (getChildAt(2).id == child?.id) {
                 if (focusArea != null) {
-                    val isInvalidatedIssued = super.drawChild(canvas, child, drawingTime)
+
+                    val isInvalidatedIssued =
+                        super.drawChild(focusAreaCopyRecordingCanvas, child, drawingTime)
+
+//                    focusAreaCopyRecordingCanvas.drawColor(ColorUtils.setAlphaComponent(Color.RED, 175))
+
+                    focusedContentCopy.endRecording()
+
+                    canvas.drawRenderNode(focusedContentCopy)
 
                     canvas.drawRenderNode(focusedContent)
 

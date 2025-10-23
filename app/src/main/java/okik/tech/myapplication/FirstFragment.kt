@@ -1,6 +1,10 @@
 package okik.tech.myapplication
 
 import android.app.ActionBar
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Bundle
@@ -15,16 +19,18 @@ import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import android.widget.TextView
+import androidx.annotation.Nullable
 import androidx.appcompat.widget.AppCompatButton
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentTransaction
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.LinearSmoothScroller
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.button.MaterialButton
+import okik.tech.myapplication.databinding.DialogContentBinding
 import okik.tech.myapplication.databinding.FragmentFirstBinding
-import okik.tech.myapplication.databinding.OverlayTransparentBinding
 import okik.tech.myapplication.databinding.RecyclerItemBinding
 
 /**
@@ -210,18 +216,130 @@ class FirstFragment : Fragment() {
 //        binding.root.addView(replica)
 
         binding.buttonFirst.setOnClickListener {
-            binding.viewOverlay.visibility = View.VISIBLE
-            binding.root.setRenderEffect(RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.DECAL))
-
-            val aView = manager.findViewByPosition(2)
+//            requireActivity().window.decorView.setRenderEffect(RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.DECAL))
+            val aView = manager.findViewByPosition(1)
             val clone = RecyclerItemBinding.inflate(layoutInflater).root
 
 //            val aView = binding.buttonFirst
 //            val clone = MaterialButton(requireContext())
 //            clone.text = "Next"
 
-            showPopup(binding.root, aView, clone)
+//            showPopup(binding.root, aView, clone)
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+//                val triangle = DialogOriginTriangle(requireContext())
+//                binding.root.setBackgroundColor(Color.BLUE)
+//                triangle.layoutParams = FrameLayout.LayoutParams(100, 100)
+//                triangle.setRenderEffect(
+//                                                    RenderEffect.createBlurEffect(
+//                                    30f,
+//                                    30f,
+//                                    Shader.TileMode.CLAMP
+//                                )
+//                )
+//                (binding.root as FrameLayout).addView(triangle)
+
+
+
+                if (aView != null) {
+                        val content = DialogContentBinding.inflate(layoutInflater)
+
+                        val widthInPixels = TypedValue.applyDimension(
+                            TypedValue.COMPLEX_UNIT_DIP,
+                            400f,
+                            resources.displayMetrics
+                        )
+
+                        // always specify the width and height of the content of the dialog like this
+                        content.root.layoutParams = ConstraintLayout.LayoutParams(
+                            widthInPixels.toInt(),
+                            widthInPixels.toInt()/2
+                        )
+
+//                        (binding.root as TutorialDisplayLayout).focusViewWithDialog(
+//                            aView,
+//                            null,
+//                            null,
+//                            null,
+//                            null,
+//                            null,
+//                            null,
+//                            null,
+//                            null,
+//                            Gravity.BOTTOM,
+//                            -30f,
+//                            30f,
+//                            0.5f,
+//                            0.5f,
+//                            true,
+//                            content.root
+//                        )
+
+                        val paint = Paint()
+                    paint.color = Color.GREEN
+                    paint.alpha = 255
+                        paint.isAntiAlias = true
+                        paint.style = Paint.Style.FILL
+                    paint.strokeWidth = 8f
+
+
+                        val focusArea = FocusArea.Builder()
+                            .setView(aView)
+                            .setOuterAreaEffect(RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP))
+                            .setOverlayColor(Color.BLACK)
+                            .setOverlayAlpha(.5f)
+                            .setSurroundingThicknessEffect(
+                                RenderEffect.createBlurEffect(
+                                    10f,
+                                    10f,
+                                    Shader.TileMode.CLAMP
+                                )
+                            )
+                            .setRoundedCornerSurrounding(
+                                FocusArea.RoundedCornerSurrounding(
+                                    paint,
+                                    80,
+                                    FocusArea.InnerPadding(0f, 0f, 0f, 0f)
+                                )
+                            )
+                            .setSurroundingThickness(
+                                FocusArea.SurroundingThickness(64f, 64f, 64f, 64f)
+                            ).build()
+
+
+                        (binding.root as TutorialDisplayLayout).renderFocusArea(focusArea)
+
+//                    val ft: FragmentTransaction = childFragmentManager.beginTransaction()
+//            ft.show(HomeDialog())
+
+//                    val dial = TutorialFragmentDialog()
+//                    dial.setFocusAreas(focusArea)
+//                        dial.show(ft, "")
+
+//                    binding.root.focusView(aView, null, null, null, null)
+                    } else {
+//                    binding.root.focusView(null, null, null, null, null)
+                    }
+            } else {
+                binding.viewOverlay!!.visibility = View.VISIBLE
+//            binding.root.setRenderEffect(RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.DECAL))
+
+                showPopup(binding.root, aView, clone)
+            }
         }
+    }
+
+    private fun highlightView(view: View) {
+//        val tutorialLayout = TutorialDisplayLayout(requireContext(), view)
+//        tutorialLayout.highlightView(view)
+
+//        val popi = PopupWindow(
+//            tutorialLayout,
+//            ViewGroup.LayoutParams.MATCH_PARENT,
+//            ViewGroup.LayoutParams.MATCH_PARENT,
+//            false // closes on outside touche if true
+//        )
+//
+//        popi.showAtLocation(binding.root, Gravity.NO_GRAVITY, 0, 0)
     }
 
     private fun showPopup(button: View, aView: View?, viewClone: View) {
@@ -242,7 +360,7 @@ class FirstFragment : Fragment() {
 
         location[1] = location[1] - topBarHeight
 
-        val content = OverlayTransparentBinding.inflate(layoutInflater)
+        val content = DialogContentBinding.inflate(layoutInflater)
 
         val widthInPixels = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -280,8 +398,9 @@ class FirstFragment : Fragment() {
 
         content.tb.setOnClickListener {
             popi.dismiss()
-            binding.viewOverlay.visibility = View.INVISIBLE
-            binding.root.setRenderEffect(null)
+            binding.viewOverlay?.visibility = View.INVISIBLE
+//            binding.root.setRenderEffect(null)
+//            requireActivity().window.decorView.setRenderEffect(null)
 
         }
     }
