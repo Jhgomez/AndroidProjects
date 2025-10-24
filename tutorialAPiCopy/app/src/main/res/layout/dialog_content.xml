@@ -25,34 +25,20 @@
             app:layout_constraintEnd_toEndOf="parent"
             android:background="@color/black">
 
-        <okik.tech.tutorialcopy.DialogOriginTriangle
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                app:Orientation="left"
-                android:layout_marginTop="39dp"
-                app:YOriginOffsetPercent="1"
-                android:layout_gravity="left" />
+        <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:layout_marginTop="64dp"
+                android:maxLines="8"
+                android:text="Some text I dont care about would bln bln bln nl nlm"/>
 
-        <okik.tech.tutorialcopy.RoundContainer
+        <Button
+                android:id="@+id/tb"
+                android:layout_gravity="center_horizontal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="60dp" >
-
-            <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:layout_marginTop="64dp"
-                    android:maxLines="8"
-                    android:text="Some text I dont care about would bln bln bln nl nlm"/>
-
-            <Button
-                    android:id="@+id/tb"
-                    android:layout_gravity="center_horizontal"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="An Action"/>
-        </okik.tech.tutorialcopy.RoundContainer>
+                android:text="An Action"/>
 
     </FrameLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

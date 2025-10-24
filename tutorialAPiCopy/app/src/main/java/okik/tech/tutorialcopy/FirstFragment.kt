@@ -54,48 +54,6 @@ class FirstFragment : Fragment() {
         val adapter = MyAdapter(listOf(1,2,3,4,5,6,7,8,9))
         binding.recycler.adapter = adapter
 
-        val listener = Listener(
-            manager,
-            { firstCompVisible ->
-                var smoothScroller = object : LinearSmoothScroller(requireContext()){
-
-
-                    override fun getHorizontalSnapPreference(): Int {
-                        return LinearSmoothScroller.SNAP_TO_START
-                    }
-
-                    override fun onTargetFound(
-                        targetView: View,
-                        state: RecyclerView.State,
-                        action: Action
-                    ) {
-                        super.onTargetFound(targetView, state, action)
-                    }
-
-                    //1
-                    override fun calculateDxToMakeVisible(view: View, snapPreference: Int): Int {
-                        val layoutManager = getLayoutManager()
-                        if (layoutManager == null || !layoutManager.canScrollHorizontally()) {
-                            return 0
-                        }
-                        val params = view.getLayoutParams() as RecyclerView.LayoutParams
-                        val left = layoutManager.getDecoratedLeft(view) - params.leftMargin
-                        val right = layoutManager.getDecoratedRight(view) + params.rightMargin
-                        val start = layoutManager.getPaddingLeft()
-                        val end = layoutManager.getWidth() - layoutManager.getPaddingRight()
-
-                        val ret = calculateDtToFit(left, right, start, end, snapPreference)
-
-                        return ret
-                    }
-                }
-
-                smoothScroller.targetPosition = firstCompVisible
-
-                manager.startSmoothScroll(smoothScroller)
-            }
-        )
-
 
         var smoothScroller = object : LinearSmoothScroller(requireContext()){
 
@@ -265,7 +223,7 @@ class FirstFragment : Fragment() {
 
                         val paint = Paint()
                     paint.color = Color.GREEN
-                    paint.alpha = 255
+                    paint.alpha = 50
                         paint.isAntiAlias = true
                         paint.style = Paint.Style.FILL
                     paint.strokeWidth = 8f
@@ -275,23 +233,23 @@ class FirstFragment : Fragment() {
                             .setView(aView)
                             .setOuterAreaEffect(RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP))
                             .setOverlayColor(Color.BLACK)
-                            .setOverlayAlpha(.5f)
+                            .setOverlayAlpha(30f)
                             .setSurroundingThicknessEffect(
                                 RenderEffect.createBlurEffect(
-                                    10f,
-                                    10f,
+                                    80f,
+                                    80f,
                                     Shader.TileMode.CLAMP
                                 )
                             )
                             .setRoundedCornerSurrounding(
                                 FocusArea.RoundedCornerSurrounding(
                                     paint,
-                                    80,
+                                    10,
                                     FocusArea.InnerPadding(0f, 0f, 0f, 0f)
                                 )
                             )
                             .setSurroundingThickness(
-                                FocusArea.SurroundingThickness(64f, 64f, 64f, 64f)
+                                FocusArea.SurroundingThickness(40f, 40f, 40f, 40f)
                             ).build()
 
 
@@ -332,66 +290,7 @@ class FirstFragment : Fragment() {
     }
 
     private fun showPopup(button: View, aView: View?, viewClone: View) {
-        var location = intArrayOf(0, 0)
 
-        aView?.getLocationOnScreen(location)
-
-        val tutorialLayout = TutorialLayout(requireContext())
-
-        var topBarHeight: Int
-
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
-            topBarHeight = binding.root.rootWindowInsets?.getInsetsIgnoringVisibility(
-                WindowInsets.Type.statusBars())?.top ?: 0
-        } else {
-            topBarHeight = binding.root.rootWindowInsets?.systemWindowInsetTop ?: 0
-        }
-
-        location[1] = location[1] - topBarHeight
-
-        val content = DialogContentBinding.inflate(layoutInflater)
-
-        val widthInPixels = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            400f,
-            resources.displayMetrics
-        )
-
-        // always specify the width and height of the content of the dialog like this
-        content.root.layoutParams = ConstraintLayout.LayoutParams(
-            widthInPixels.toInt(),
-            widthInPixels.toInt()/2
-        )
-
-        tutorialLayout.setUpCloneWithBackgroundAndDialog(
-            originalView =  aView ?: throw IllegalArgumentException("View not found in recycler"),
-            position = location,
-            clone = viewClone,
-            dialogContent = content.root,
-            gravity =  "bottom",
-            dialogXOffsetDp = 60f,
-            dialogYOffsetDp = 32f,
-            originOffsetDp = .5f,
-            destinationOffsetDp = .5f,
-            shouldCenterOnMainAxis = true
-        )
-
-        val popi = PopupWindow(
-            tutorialLayout,
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            ViewGroup.LayoutParams.MATCH_PARENT,
-            false // closes on outside touche if true
-        )
-
-        popi.showAtLocation(binding.root, Gravity.NO_GRAVITY, 0, 0)
-
-        content.tb.setOnClickListener {
-            popi.dismiss()
-            binding.viewOverlay?.visibility = View.INVISIBLE
-//            binding.root.setRenderEffect(null)
-//            requireActivity().window.decorView.setRenderEffect(null)
-
-        }
     }
 
     override fun onDestroyView() {
