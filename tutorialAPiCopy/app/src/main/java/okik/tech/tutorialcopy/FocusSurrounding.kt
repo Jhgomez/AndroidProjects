@@ -127,25 +127,16 @@ class FocusSurrounding @JvmOverloads constructor(
 
     override fun draw(canvas: Canvas) {
         if (backgroundView != null && focusArea != null) {
-            saveOnScreenLocation()
-
             hardwarePath(canvas)
         }
 
         super.draw(canvas)
     }
 
-    private fun saveOnScreenLocation() {
-        getLocationOnScreen(ownLocation)
-        backgroundView!!.getLocationOnScreen(backgroundViewLocation)
-    }
-
     private fun hardwarePath(canvas: Canvas) {
         blurNode.setPosition(0, 0, width, height)
 
-//        updateRenderNodeProperties()
-
-        drawSnapshot()
+        recordBackgroundViews()
 
         // Draw on the system canvas
         canvas.drawRenderNode(blurNode)
@@ -161,19 +152,9 @@ class FocusSurrounding @JvmOverloads constructor(
         }
     }
 
-    private fun updateRenderNodeProperties() {
-        val layoutTranslationX = -getLeftValue().toFloat()
-        val layoutTranslationY = -getTopValue().toFloat()
+    private fun recordBackgroundViews() {
+        blurNode.setRenderEffect(focusArea!!.surroundingThicknessEffect)
 
-        // Pivot point for the rotation and scale (in case it's applied)
-        blurNode.setPivotX(width / 2f - layoutTranslationX)
-        blurNode.setPivotY(height / 2f - layoutTranslationY)
-//
-//        blurNode.setTranslationX(-width.toFloat())
-//        blurNode.setTranslationY()
-    }
-
-    private fun drawSnapshot() {
         val recordingCanvas = blurNode.beginRecording()
         if (frameClearDrawable != null) {
             frameClearDrawable!!.draw(recordingCanvas)
@@ -185,9 +166,6 @@ class FocusSurrounding @JvmOverloads constructor(
         )
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
-        // Looks like the order of this doesn't matter
-
-        blurNode.setRenderEffect(focusArea!!.surroundingThicknessEffect)
 
         blurNode.endRecording()
     }
@@ -195,13 +173,4 @@ class FocusSurrounding @JvmOverloads constructor(
     fun setFallbackBackground(frameClearDrawable: Drawable?) {
         this.frameClearDrawable = frameClearDrawable
     }
-
-    private fun getTopValue(): Int {
-        return ownLocation[1] - backgroundViewLocation[1]
-    }
-
-    private fun getLeftValue(): Int {
-        return ownLocation[0] - backgroundViewLocation[0]
-    }
-
 }
