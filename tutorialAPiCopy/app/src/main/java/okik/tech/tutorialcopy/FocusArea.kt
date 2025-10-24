@@ -3,6 +3,9 @@ package okik.tech.tutorialcopy
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RenderEffect
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.TypedValue
 import android.view.View
@@ -35,7 +38,6 @@ import androidx.annotation.RequiresApi
  * @param surroundingThicknessEffect if null, the copy of the surrounding is the same surrounding
  * as in original outer area
  * @param outerAreaEffect any render effect applied to surrounding area
- * @param overlayParams the params to be applied to overlay, if null it will match parent automatically
  * @param overlayColor if null no overlay will be painted, otherwise an overlay on the full screen
  * will be painted using this paint object
  */
@@ -46,11 +48,13 @@ class FocusArea private constructor(
     val viewLocation: IntArray,
     val surroundingThickness: SurroundingThickness,
     val surroundingThicknessEffect: RenderEffect?,
-    val roundedCornerSurrounding: RoundedCornerSurrounding?,
+    val surroundingAreaPaint: Paint,
+    val surroundingAreaPadding: InnerPadding,
+    val surroundingAreaBackgroundDrawable: Drawable,
+    val shouldClipToBackground: Boolean,
     val outerAreaEffect: RenderEffect?,
-    val overlayParams: LayoutParams,
     val overlayColor: Int,
-    val overlayAlpha: Float
+    val overlayAlpha: Short,
 ){
 
     /**
@@ -61,18 +65,6 @@ class FocusArea private constructor(
         val bottom: Float,
         val start: Float,
         val end: Float
-    )
-
-    /**
-     * if this object is passed to a focus area object it will rectangle behind the view the user wants
-     * to add visual focus on but surrounding area will not be an exact copy of the actual surrounding,
-     * and instead this rounded corner surrounding will be created on top of any effect applied to
-     * the outer area(outside the focus view area)
-     */
-    data class RoundedCornerSurrounding(
-        val paint: Paint,
-        val cornerRadius: Short,
-        val innerPadding: InnerPadding
     )
 
     /**
@@ -91,11 +83,13 @@ class FocusArea private constructor(
         private var viewLocation: IntArray? = null
         private var surroundingThickness: SurroundingThickness? = null
         private var surroundingThicknessEffect: RenderEffect? = null
-        private var roundedCornerSurrounding: RoundedCornerSurrounding? = null
         private var outerAreaEffect: RenderEffect? = null
-        private var overlayParams: LayoutParams? = null
         private var overlayColor: Int = Color.TRANSPARENT
-        private var overlayAlpha: Float = 0.0f
+        private var overlayAlpha: Short = 125
+        private var surroundingAreaPaint: Paint? = null
+        private var surroundingAreaPadding: InnerPadding? = null
+        private var surroundingAreaBackgroundDrawable: Drawable? = null
+        private var shouldClipToBackground: Boolean = true
 
         fun setView(view: View): Builder {
             this.view = view
@@ -137,30 +131,20 @@ class FocusArea private constructor(
             return this
         }
 
-        fun setRoundedCornerSurrounding(roundedCornerSurrounding: RoundedCornerSurrounding): Builder {
-            this.roundedCornerSurrounding = roundedCornerSurrounding
-            return this
-        }
-
         fun setOuterAreaEffect(outerAreaEffect: RenderEffect?): Builder {
             this.outerAreaEffect = outerAreaEffect
             return this
         }
 
-        fun setOverlayParams(overlayParams: LayoutParams): Builder {
-            this.overlayParams = overlayParams
-            return this
-        }
-
-        fun setOverlayColor(overlayColor: Int): Builder {
+        fun setOuterAreaOverlayColor(overlayColor: Int): Builder {
             this.overlayColor = overlayColor
             return this
         }
 
         /**
-         * @param overlayAlpha values from 0 to 1 where 0 is fully transparent and 1 is fully opaque
+         * @param overlayAlpha values from 0 to 255 where 0 is fully transparent and 255 is fully opaque
          */
-        fun setOverlayAlpha(overlayAlpha: Float): Builder {
+        fun setOuterAreaOverlayAlpha(overlayAlpha: Short): Builder {
             this.overlayAlpha = overlayAlpha
             return this
         }
@@ -172,6 +156,22 @@ class FocusArea private constructor(
                 dp.toFloat(),
                 this.view!!.resources.displayMetrics
             )
+        }
+
+        fun setSurroundingAreaPaint(surroundingAreaPaint: Paint) {
+            this.surroundingAreaPaint = surroundingAreaPaint
+        }
+
+        fun setSurroundingAreaPadding(surroundingAreaPadding: InnerPadding) {
+            this.surroundingAreaPadding = surroundingAreaPadding
+        }
+
+        fun setSurroundingAreaBackgroundDrawable(surroundingAreaBackgroundDrawable: Drawable) {
+            this.surroundingAreaBackgroundDrawable = surroundingAreaBackgroundDrawable
+        }
+
+        fun setShouldClipToBackground(shouldClipToBackground: Boolean) {
+            this.shouldClipToBackground = shouldClipToBackground
         }
 
 
@@ -205,24 +205,39 @@ class FocusArea private constructor(
                 )
             }
 
-            if (overlayParams == null) {
-                overlayParams = FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT
+            if (surroundingAreaPaint == null) {
+                val paint = Paint()
+                paint.color = Color.WHITE
+                paint.alpha = 170
+                paint.isAntiAlias = true
+                paint.style = Paint.Style.FILL
+
+                surroundingAreaPaint = paint
+            }
+
+            if (surroundingAreaPadding == null) {
+                surroundingAreaPadding = InnerPadding(0f, 0f, 0f, 0f)
+            } else {
+                surroundingAreaPadding = InnerPadding(
+                    dpToPx(surroundingAreaPadding!!.top),
+                    dpToPx(surroundingAreaPadding!!.bottom),
+                    dpToPx(surroundingAreaPadding!!.start),
+                    dpToPx(surroundingAreaPadding!!.end)
                 )
             }
 
-            if (roundedCornerSurrounding != null) {
-                roundedCornerSurrounding = RoundedCornerSurrounding(
-                    roundedCornerSurrounding!!.paint,
-                    roundedCornerSurrounding!!.cornerRadius,
-                    InnerPadding(
-                        dpToPx(roundedCornerSurrounding!!.innerPadding.top),
-                        dpToPx(roundedCornerSurrounding!!.innerPadding.bottom),
-                        dpToPx(roundedCornerSurrounding!!.innerPadding.start),
-                        dpToPx(roundedCornerSurrounding!!.innerPadding.end),
-                    )
+            if (surroundingAreaBackgroundDrawable == null) {
+                val n = dpToPx(16f)
+
+                val roundShape = RoundRectShape(
+                    floatArrayOf(n, n, n, n, n, n, n ,n),
+                    null,
+                    null
                 )
+
+                val shapeDrawable = ShapeDrawable(roundShape)
+
+                surroundingAreaBackgroundDrawable = shapeDrawable
             }
 
             return FocusArea(
@@ -230,9 +245,11 @@ class FocusArea private constructor(
                 viewLocation!!,
                 surroundingThickness!!,
                 surroundingThicknessEffect,
-                roundedCornerSurrounding,
+                surroundingAreaPaint!!,
+                surroundingAreaPadding!!,
+                surroundingAreaBackgroundDrawable!!,
+                shouldClipToBackground,
                 outerAreaEffect,
-                overlayParams!!,
                 overlayColor,
                 overlayAlpha
             )
