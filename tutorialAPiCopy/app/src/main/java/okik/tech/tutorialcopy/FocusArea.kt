@@ -83,13 +83,16 @@ class FocusArea private constructor(
         private var viewLocation: IntArray? = null
         private var surroundingThickness: SurroundingThickness? = null
         private var surroundingThicknessEffect: RenderEffect? = null
-        private var outerAreaEffect: RenderEffect? = null
-        private var overlayColor: Int = Color.TRANSPARENT
-        private var overlayAlpha: Short = 125
         private var surroundingAreaPaint: Paint? = null
         private var surroundingAreaPadding: InnerPadding? = null
         private var surroundingAreaBackgroundDrawable: Drawable? = null
+        private var shouldApplyEffectToSurroundingThicknessBackground: Boolean = true
+        private var shouldApplyEffectToSurroundingThickness: Boolean = false
         private var shouldClipToBackground: Boolean = true
+        private var outerAreaEffect: RenderEffect? = null
+        private var overlayColor: Int = Color.TRANSPARENT
+        private var overlayAlpha: Short = 125
+
 
         fun setView(view: View): Builder {
             this.view = view
@@ -158,20 +161,51 @@ class FocusArea private constructor(
             )
         }
 
-        fun setSurroundingAreaPaint(surroundingAreaPaint: Paint) {
+        fun setSurroundingAreaPaint(surroundingAreaPaint: Paint): Builder {
             this.surroundingAreaPaint = surroundingAreaPaint
+            return this
         }
 
-        fun setSurroundingAreaPadding(surroundingAreaPadding: InnerPadding) {
+        /**
+         * Using paddings when clip to background is true may be a little buggy at the moment, but these
+         * work as expected when clip to background is false, when clip to padding is true you should use
+         * different tick values for the edge you need to be a different size
+         */
+        fun setSurroundingAreaPadding(surroundingAreaPadding: InnerPadding): Builder {
             this.surroundingAreaPadding = surroundingAreaPadding
+            return this
         }
 
-        fun setSurroundingAreaBackgroundDrawable(surroundingAreaBackgroundDrawable: Drawable) {
+        fun setSurroundingAreaBackgroundDrawable(surroundingAreaBackgroundDrawable: Drawable): Builder {
             this.surroundingAreaBackgroundDrawable = surroundingAreaBackgroundDrawable
+            return this
         }
 
-        fun setShouldClipToBackground(shouldClipToBackground: Boolean) {
+        /**
+         * This property in combination with others renders very specific behaviours on screen, if
+         * set to false then a copy of outer area(with the specified outer area overlay color,
+         * alpha and effect) is draw in the surroundings of the view you want to focus on, so if you
+         * pass a render effect to the surrounding area it will apply that copy of the surrounding area
+         * the surrounding area is always a rectangle defined by the start, top, end, bottom thickness, this
+         * means you'd see a sharp edged rectangle/square with another effect applied in addition to the one already
+         * added by the outer area properties and effect. If you pass a background drawable like a shape
+         * drawable, it will be drawn on top of the surrounding area with the characteristics previously
+         * mentioned and the drawable will have the specified paint applied to it(note that for now this only
+         * works with shape drawables with other type of drawables you have to modify "manually"), so if you
+         * add an effect to the surrounding area in this set up you will also see it applied to the drawable
+         * so a very useful use case would be to pass the same type of render effect and with same exact
+         * values and define clip to background as false and define a background drawable, and add inner padding
+         * if applying effects like blur, to give space to the effect to be fully visible, if used with blur
+         * it will create soft edges background shapes. If you need sharp edges then set this to true,
+         * if you set it to true, and render a completely transparent color/paint you will have a feel of
+         * a hollow/hole which is an exact copy of the surrounding views of the original content(below the
+         * render effect, and overlay of the outer area) and to this copy of the surrounding area you can
+         * apply effects, and a paint in combination of a drawable(at this time we asume you'd like to use
+         * shape drawables)
+         */
+        fun setShouldClipToBackground(shouldClipToBackground: Boolean): Builder {
             this.shouldClipToBackground = shouldClipToBackground
+            return this
         }
 
 
