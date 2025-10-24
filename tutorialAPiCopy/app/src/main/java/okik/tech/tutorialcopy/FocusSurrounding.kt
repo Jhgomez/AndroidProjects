@@ -141,11 +141,9 @@ class FocusSurrounding @JvmOverloads constructor(
     }
 
     private fun hardwarePath(canvas: Canvas) {
-        // TODO would be good to keep it the size of the BlurView instead of the target, but then the animation
-        //  like translation and rotation would go out of bounds. Not sure if there's a good fix for this
-        blurNode.setPosition(0, 0, backgroundView!!.getWidth(), backgroundView!!.getHeight())
+        blurNode.setPosition(0, 0, width, height)
 
-        updateRenderNodeProperties()
+//        updateRenderNodeProperties()
 
         drawSnapshot()
 
@@ -170,8 +168,9 @@ class FocusSurrounding @JvmOverloads constructor(
         // Pivot point for the rotation and scale (in case it's applied)
         blurNode.setPivotX(width / 2f - layoutTranslationX)
         blurNode.setPivotY(height / 2f - layoutTranslationY)
-        blurNode.setTranslationX(layoutTranslationX)
-        blurNode.setTranslationY(layoutTranslationY)
+//
+//        blurNode.setTranslationX(-width.toFloat())
+//        blurNode.setTranslationY()
     }
 
     private fun drawSnapshot() {
@@ -179,6 +178,11 @@ class FocusSurrounding @JvmOverloads constructor(
         if (frameClearDrawable != null) {
             frameClearDrawable!!.draw(recordingCanvas)
         }
+
+        recordingCanvas.translate(
+            -focusArea!!.viewLocation[0].toFloat() + focusArea!!.surroundingThickness.start,
+            -focusArea!!.viewLocation[1].toFloat() + focusArea!!.surroundingThickness.top,
+        )
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
         // Looks like the order of this doesn't matter
