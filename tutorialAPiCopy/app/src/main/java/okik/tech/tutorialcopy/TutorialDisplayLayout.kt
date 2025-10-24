@@ -4,27 +4,16 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Outline
 import android.graphics.Paint
-import android.graphics.RecordingCanvas
 import android.graphics.RenderNode
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.AttributeSet
-import android.util.TypedValue
-import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
-import android.view.ViewOutlineProvider
-import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.ColorUtils
-import androidx.core.graphics.toColor
-import okik.tech.tutorialcopy.databinding.DialogContentBinding
 
 
 /**
@@ -102,14 +91,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
                 focusSurrounding.setEffectHolderBackgroundDrawable(shapeDrawable)
                 focusSurrounding.setEffectHolderBackgroundPaint(paint)
+                // TODO add padding on each edge
                 focusSurrounding.setEffectHolderBackgroundPadding(innerPadding.top.toInt())
-//                val aPaint = shapeDrawable.paint
-//                aPaint.color = paint.color
-//                aPaint.alpha = paint.alpha
-//                aPaint.style = paint.style
-//                aPaint.strokeWidth = paint.strokeWidth
-//                aPaint.isAntiAlias = paint.isAntiAlias
-
             }
         }
 
@@ -212,11 +195,15 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                             || focusArea!!.surroundingThickness.start > 0
                             || focusArea!!.surroundingThickness.end > 0
                         ) {
-                            (child as FocusSurrounding).renderNodeBlurController(
+                            child.renderNodeBlurController(
                                 getChildAt(0),
                                 focusArea!!,
                                 contentCopy
                             )
+
+                            if (context is Activity) {
+                                child.setFallbackBackground((context as Activity).window.decorView.background)
+                            }
 
                             return super.drawChild(canvas, child, drawingTime)
 

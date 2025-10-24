@@ -223,7 +223,7 @@ class FirstFragment : Fragment() {
 
                         val paint = Paint()
                     paint.color = Color.GREEN
-                    paint.alpha = 50
+                    paint.alpha = 0
                         paint.isAntiAlias = true
                         paint.style = Paint.Style.FILL
                     paint.strokeWidth = 8f
@@ -236,8 +236,8 @@ class FirstFragment : Fragment() {
                             .setOverlayAlpha(30f)
                             .setSurroundingThicknessEffect(
                                 RenderEffect.createBlurEffect(
-                                    80f,
-                                    80f,
+                                    1f,
+                                    1f,
                                     Shader.TileMode.CLAMP
                                 )
                             )

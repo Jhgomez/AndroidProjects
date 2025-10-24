@@ -188,7 +188,7 @@ class FocusSurrounding @JvmOverloads constructor(
         blurNode.endRecording()
     }
 
-    fun setFrameClearDrawable(frameClearDrawable: Drawable?) {
+    fun setFallbackBackground(frameClearDrawable: Drawable?) {
         this.frameClearDrawable = frameClearDrawable
     }
 
