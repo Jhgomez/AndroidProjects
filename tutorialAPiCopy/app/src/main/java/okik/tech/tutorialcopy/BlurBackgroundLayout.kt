@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Outline
 import android.graphics.Paint
-import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
@@ -26,7 +25,7 @@ class BlurBackgroundLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
-    private var ownLocation = intArrayOf(2)
+    private val ownLocation = IntArray(2)
     private var paint: Paint = Paint()
     private val blurNode = RenderNode("BlurView node")
     private var backgroundViewRenderNode: RenderNode? = null
@@ -60,7 +59,7 @@ class BlurBackgroundLayout @JvmOverloads constructor(
      */
 
 
-    override fun setBackground(drawable: Drawable) {
+    fun customBackground(drawable: Drawable) {
         background = drawable
 
         if (drawable is ShapeDrawable) this.paint = drawable.paint

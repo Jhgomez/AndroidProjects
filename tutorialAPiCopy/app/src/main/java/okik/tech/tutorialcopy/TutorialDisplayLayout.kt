@@ -4,6 +4,8 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RenderNode
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -67,6 +69,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
 
+        tutorialLayout.addView(content.root)
+
         val backgroundSettings = BlurBackgroundSettings(
             focusArea.surroundingThicknessEffect,
             focusArea.shouldClipToBackground,
@@ -78,7 +82,17 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             tutorialLayout.setFallbackBackground((context as Activity).window.decorView.background)
         }
 
-        tutorialLayout.setBackground(focusArea.surroundingAreaBackgroundDrawable.mutate())
+        val n = 16f
+
+        val roundShape = RoundRectShape(
+            floatArrayOf(n, n, n, n, n, n, n ,n),
+            null,
+            null
+        )
+
+        val shapeDrawable = ShapeDrawable(roundShape)
+
+        tutorialLayout.customBackground(focusArea.surroundingAreaBackgroundDrawable)
         tutorialLayout.setBackgroundDrawablePaint(focusArea.surroundingAreaPaint)
         tutorialLayout.clipToBackground(focusArea.shouldClipToBackground)
 
