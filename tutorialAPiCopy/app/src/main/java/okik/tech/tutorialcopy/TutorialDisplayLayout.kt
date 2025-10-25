@@ -6,10 +6,16 @@ import android.graphics.Canvas
 import android.graphics.RenderNode
 import android.os.Build
 import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.Gravity
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
+import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.ColorUtils
+import okik.tech.tutorialcopy.databinding.DialogContentBinding
 
 /**
  * This custom layout is expected to only have one child, which is usually a Linear or Constraint
@@ -34,10 +40,82 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         this.focusArea = focusArea
     }
 
+    fun renderFocusAreaWithDialog(focusArea: FocusArea) {
+        this.renderFocusArea(focusArea)
+
+        val tutorialLayout = BlurBackgroundLayout(context)
+
+        val content = DialogContentBinding.inflate(LayoutInflater.from(context))
+
+        val widthInPixels = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            300f,
+            resources.displayMetrics
+        )
+
+        val hInPixels = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            300f,
+            resources.displayMetrics
+        )
+
+        // always specify the width and height of the content of the dialog like this
+        content.root.layoutParams = LayoutParams(
+            widthInPixels.toInt(),
+            LayoutParams.MATCH_PARENT
+        )
+
+        (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
+
+        val backgroundSettings = BlurBackgroundSettings(
+            focusArea.surroundingThicknessEffect,
+            focusArea.shouldClipToBackground,
+            focusArea.surroundingAreaBackgroundDrawable,
+            focusArea.surroundingAreaPadding
+        )
+
+        if (context is Activity) {
+            tutorialLayout.setFallbackBackground((context as Activity).window.decorView.background)
+        }
+
+        tutorialLayout.setBackground(focusArea.surroundingAreaBackgroundDrawable.mutate())
+        tutorialLayout.setBackgroundDrawablePaint(focusArea.surroundingAreaPaint)
+        tutorialLayout.clipToBackground(focusArea.shouldClipToBackground)
+
+        tutorialLayout.renderNodeBlurController(
+            contentCopy,
+            backgroundSettings
+        )
+
+        val popi = PopupWindow(
+            tutorialLayout,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            false // closes on outside touche if true
+        )
+
+        popi.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
+
+        content.tb.setOnClickListener {
+            popi.dismiss()
+            this.focusArea = null
+
+            for (i in 1 .. childCount -1) {
+                getChildAt(i).visibility = GONE
+            }
+
+//            invalidate()
+//            binding.viewOverlay?.visibility = View.INVISIBLE
+//            binding.root.setRenderEffect(null)
+//            requireActivity().window.decorView.setRenderEffect(null)
+
+        }
+    }
+
 
     private fun initComponents(focusArea: FocusArea) {
         // view at index 1
-        val focusSurrounding = BackgroundBlurrerLayout(context)
+        val focusSurrounding = FocusLayout(context)
         focusSurrounding.id = generateViewId()
 
         val shapeWidth = focusArea.view.width +
@@ -158,7 +236,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         // this will be true only if user passed a rounded surrounding object, so we need to
         // render on canvas rounded background and then the view to focus
-        if (child is BackgroundBlurrerLayout) {
+        if (child is FocusLayout) {
             if (focusArea != null) {
                 if (focusArea!!.surroundingThickness.top > 0
                     || focusArea!!.surroundingThickness.bottom > 0
