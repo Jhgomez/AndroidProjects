@@ -150,20 +150,28 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         (focusSurrounding.layoutParams as MarginLayoutParams).setMargins(xLocation.toInt(), yLocation.toInt(), 0 , 0)
 
-        focusSurrounding.setEffectHolderBackgroundDrawable(focusArea.surroundingAreaBackgroundDrawable)
-
-        focusSurrounding.setEffectHolderBackgroundPadding(
-            focusArea.surroundingAreaPadding.top.toInt(),
-            focusArea.surroundingAreaPadding.bottom.toInt(),
-            focusArea.surroundingAreaPadding.start.toInt(),
-            focusArea.surroundingAreaPadding.end.toInt()
+        val backgroundSettings = BlurBackgroundSettings(
+            focusArea.surroundingThicknessEffect,
+            focusArea.shouldClipToBackground,
+            focusArea.surroundingAreaBackgroundDrawable,
+            focusArea.surroundingAreaPaint,
+            focusArea.surroundingAreaPadding,
+            { recordingCanvas ->
+                recordingCanvas.translate(
+                    -focusArea.viewLocation[0].toFloat() + focusArea.surroundingThickness.start,
+                    -focusArea.viewLocation[1].toFloat() + focusArea.surroundingThickness.top,
+                )
+            }
         )
 
-        if (focusArea.shouldClipToBackground) {
-            focusSurrounding.clipToBackground()
-        }
+        focusSurrounding.renderNodeBlurController(
+            backgroundSettings,
+            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
+        )
 
-        focusSurrounding.setEffectHolderBackgroundPaint(focusArea.surroundingAreaPaint)
+        if (context is Activity) {
+            focusSurrounding.setFallbackBackground((context as Activity).window.decorView.background)
+        }
 
         addView(focusSurrounding)
     }
@@ -257,15 +265,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                     || focusArea!!.surroundingThickness.start > 0
                     || focusArea!!.surroundingThickness.end > 0
                 ) {
-                    child.renderNodeBlurController(
-                        focusArea!!,
-                        if (focusArea!!.shouldClipToBackground) contentCopy else contentWithEffect
-                    )
-
-                    if (context is Activity) {
-                        child.setFallbackBackground((context as Activity).window.decorView.background)
-                    }
-
                     val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
                     canvas.drawRenderNode(focusedContent)
