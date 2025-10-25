@@ -6,8 +6,6 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RenderNode
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.AttributeSet
 import android.view.View
@@ -30,17 +28,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     private val contentCopy = RenderNode("ContentCopy")
     private val contentWithEffect = RenderNode("BlurredContent")
     private val focusedContent = RenderNode("FocusContent")
-    private val focusedContentCopy = RenderNode("FocusContentCopy")
-
-    val paint: Paint = Paint()
-
-    init {
-        paint.color = Color.WHITE
-        paint.alpha = 100
-        paint.style = Paint.Style.FILL
-        paint.strokeWidth = 8f
-        paint.isAntiAlias = true
-    }
 
     fun renderFocusArea(focusArea: FocusArea) {
         if (this.focusArea == null) {
@@ -70,31 +57,25 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         val xLocation = focusArea.viewLocation[0] -
                 focusArea.surroundingThickness.start
 
-        focusSurrounding.translationX = translationX - (translationX - xLocation)
-//
         val yLocation = focusArea.viewLocation[1] -
                 focusArea.surroundingThickness.top
 
-        focusSurrounding.translationY = translationY - (translationY - yLocation)
+        (focusSurrounding.layoutParams as MarginLayoutParams).setMargins(xLocation.toInt(), yLocation.toInt(), 0 , 0)
 
-        focusArea?.roundedCornerSurrounding?.apply {
-            if (cornerRadius > 0) {
-                val n = cornerRadius.toFloat()
+        focusSurrounding.setEffectHolderBackgroundDrawable(focusArea.surroundingAreaBackgroundDrawable)
 
-                val roundShape = RoundRectShape(
-                    floatArrayOf(n, n, n, n, n, n, n ,n),
-                    null,
-                    null
-                )
+        focusSurrounding.setEffectHolderBackgroundPadding(
+            focusArea.surroundingAreaPadding.top.toInt(),
+            focusArea.surroundingAreaPadding.bottom.toInt(),
+            focusArea.surroundingAreaPadding.start.toInt(),
+            focusArea.surroundingAreaPadding.end.toInt()
+        )
 
-                val shapeDrawable = ShapeDrawable(roundShape)
-
-                focusSurrounding.setEffectHolderBackgroundDrawable(shapeDrawable)
-                focusSurrounding.setEffectHolderBackgroundPaint(paint)
-                // TODO add padding on each edge
-                focusSurrounding.setEffectHolderBackgroundPadding(innerPadding.top.toInt())
-            }
+        if (focusArea.shouldClipToBackground) {
+            focusSurrounding.clipToBackground()
         }
+
+        focusSurrounding.setEffectHolderBackgroundPaint(focusArea.surroundingAreaPaint)
 
         addView(focusSurrounding)
     }
@@ -184,133 +165,35 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         }
 
 
-            // this will be true only if user passed a rounded surrounding object, so we need to
-            // render on canvas rounded background and then the view to focus
-            if (child is FocusSurrounding) {
-                if (focusArea != null) {
+        // this will be true only if user passed a rounded surrounding object, so we need to
+        // render on canvas rounded background and then the view to focus
+        if (child is FocusSurrounding) {
+            if (focusArea != null) {
+                if (focusArea!!.surroundingThickness.top > 0
+                    || focusArea!!.surroundingThickness.bottom > 0
+                    || focusArea!!.surroundingThickness.start > 0
+                    || focusArea!!.surroundingThickness.end > 0
+                ) {
+                    child.renderNodeBlurController(
+                        focusArea!!,
+                        if (focusArea!!.shouldClipToBackground) contentCopy else contentWithEffect
+                    )
 
-                    if (focusArea!!.roundedCornerSurrounding != null) {
-                        if (focusArea!!.surroundingThickness.top > 0
-                            || focusArea!!.surroundingThickness.bottom > 0
-                            || focusArea!!.surroundingThickness.start > 0
-                            || focusArea!!.surroundingThickness.end > 0
-                        ) {
-                            child.renderNodeBlurController(
-                                getChildAt(0),
-                                focusArea!!,
-                                contentCopy
-                            )
-
-                            if (context is Activity) {
-                                child.setFallbackBackground((context as Activity).window.decorView.background)
-                            }
-
-                            return super.drawChild(canvas, child, drawingTime)
-
-//                            val surroundingWidth = focusArea!!.view.width +
-//                                    focusArea!!.surroundingThickness.start +
-//                                    focusArea!!.surroundingThickness.end
-//
-//                            val surroundingHeight = focusArea!!.view.height +
-//                                    focusArea!!.surroundingThickness.top +
-//                                    focusArea!!.surroundingThickness.bottom
-//
-//                            focusedContentCopy.setPosition(
-//                                0,
-//                                0,
-//                                surroundingWidth.toInt(),
-//                                surroundingHeight.toInt()
-//                            )
-//
-//                            focusedContentCopy.translationX = focusArea!!.viewLocation[0].toFloat() -
-//                                    focusArea!!.surroundingThickness.start
-//
-//                            focusedContentCopy.translationY = focusArea!!.viewLocation[1].toFloat() -
-//                                    focusArea!!.surroundingThickness.top
-//
-//                            val focusAreaCopyRecordingCanvas =
-//                                focusedContentCopy.beginRecording()
-//                            focusedContentCopy.clipToBounds = true
-//                            focusedContentCopy.clipToOutline = true
-//
-//                            (focusArea!!.view.context as Activity).window.decorView.background.draw(
-//                                focusAreaCopyRecordingCanvas
-//                            )
-//
-//                            focusAreaCopyRecordingCanvas.translate(
-//                                -focusArea!!.viewLocation[0].toFloat() + focusArea!!.surroundingThickness.start,
-//                                -focusArea!!.viewLocation[1].toFloat() + focusArea!!.surroundingThickness.top
-//                            )
-//
-//                            child.setClipToOutline(true)
-//                            child.setOutlineProvider(object : ViewOutlineProvider() {
-//                                override fun getOutline(view: View?, outline: Outline) {
-//                                    child.getBackground().getOutline(outline)
-//                                    outline.setAlpha(1f)
-//                                }
-//                            })
-//
-//                            (focusArea!!.view.context as Activity).window.decorView.background.draw(
-//                                focusAreaCopyRecordingCanvas
-//                            )
-//
-//                            val n = 18f
-//
-//                            val roundShape = RoundRectShape(
-//                                floatArrayOf(n, n, n, n, n, n, n ,n),
-//                                null,
-//                                null
-//                            )
-//
-//                            val shapeDrawable = ShapeDrawable(roundShape)
-//
-//
-//                            focusAreaCopyRecordingCanvas.drawRenderNode(contentCopy)
-//                            super.drawChild(focusAreaCopyRecordingCanvas, child, drawingTime)
-//
-//                            focusedContentCopy.setRenderEffect(
-//                                focusArea!!.surroundingThicknessEffect
-//                            )
-//
-//
-//                            val overlay = ColorUtils.setAlphaComponent(
-//                                focusArea!!.roundedCornerSurrounding!!.paint.color,
-//                                170
-//                            )
-//
-////                            focusAreaCopyRecordingCanvas.drawColor(overlay)
-//
-//                            focusedContentCopy.endRecording()
-//
-//                            canvas.drawRenderNode(focusedContentCopy)
-                        }
-                    } else {
-                        if (focusArea!!.surroundingThickness.top > 0
-                            || focusArea!!.surroundingThickness.bottom > 0
-                            || focusArea!!.surroundingThickness.start > 0
-                            || focusArea!!.surroundingThickness.end > 0
-                        ) {
-                            canvas.drawRenderNode(focusedContentCopy)
-                            canvas.drawRenderNode(focusedContent)
-                        } else {
-                            canvas.drawRenderNode(focusedContent)
-                        }
+                    if (context is Activity) {
+                        child.setFallbackBackground((context as Activity).window.decorView.background)
                     }
 
-//                    val isInvalidatedIssued =
-//                        super.drawChild(focusAreaCopyRecordingCanvas, child, drawingTime)
-//
-//                    focusAreaCopyRecordingCanvas.drawColor(ColorUtils.setAlphaComponent(Color.RED, 175))
-//
-//                    focusedContentCopy.endRecording()
-//
-//                    canvas.drawRenderNode(focusedContentCopy)
-//
-//                    canvas.drawRenderNode(focusedContent)
+                    val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
+                    canvas.drawRenderNode(focusedContent)
+
+                    return isInvalidateIssued
+                } else {
+                    canvas.drawRenderNode(focusedContent)
                     return false
                 }
             }
+        }
 
         // if no focus area has been specified just render the node
         val invalidated = super.drawChild(canvas, child, drawingTime)
