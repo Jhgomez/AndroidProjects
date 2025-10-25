@@ -2,6 +2,7 @@ package okik.tech.tutorialcopy
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.RenderNode
@@ -11,7 +12,7 @@ import android.graphics.drawable.ShapeDrawable
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewOutlineProvider
-import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 
 /**
  * This component is just a frame layout wrapped in a rounded corner shape, the difference
@@ -24,13 +25,16 @@ import android.widget.FrameLayout
 class BlurBackgroundLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
-) : FrameLayout(context, attrs){
-    private val ownLocation = IntArray(2)
+) : ConstraintLayout(context, attrs) {
     private var paint: Paint = Paint()
     private val blurNode = RenderNode("BlurView node")
     private var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
     private var blurBackgroundSettings: BlurBackgroundSettings? = null
+
+    init {
+        setBackgroundColor(Color.TRANSPARENT)
+    }
 
     /**
      * If no background to the effect holder was set then this won't change the view in any way
@@ -145,8 +149,6 @@ class BlurBackgroundLayout @JvmOverloads constructor(
     }
 
     private fun recordBackgroundViews() {
-        getLocationOnScreen(ownLocation)
-
         val recordingCanvas = blurNode.beginRecording()
         if (fallBackDrawable != null) {
             fallBackDrawable!!.draw(recordingCanvas)
@@ -155,15 +157,14 @@ class BlurBackgroundLayout @JvmOverloads constructor(
         if (blurBackgroundSettings!!.shouldClipToBackground) {
             blurNode.setRenderEffect(blurBackgroundSettings!!.renderEffect)
         }
-
 //        recordingCanvas.translate(
 //            -ownLocation[0].toFloat() + focusArea!!.surroundingThickness.start,
 //            -ownLocation[1].toFloat() + focusArea!!.surroundingThickness.top,
 //        )
-        recordingCanvas.translate(
-            -ownLocation[0].toFloat() + blurBackgroundSettings!!.padding.start,
-            -ownLocation[1].toFloat() + blurBackgroundSettings!!.padding.top,
-        )
+//        recordingCanvas.translate(
+//            -ownLocation[0].toFloat() + blurBackgroundSettings!!.padding.start,
+//            -ownLocation[1].toFloat() + blurBackgroundSettings!!.padding.top,
+//        )
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 
