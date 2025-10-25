@@ -12,8 +12,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
-import androidx.core.graphics.ColorUtils
-
 
 /**
  * This component is just a frame layout wrapped in a rounded corner shape, the difference
@@ -23,7 +21,7 @@ import androidx.core.graphics.ColorUtils
  * a view that lives behind the rest of the content, and is added automatically when view is
  * instantiated, it is referred to as "effectHolderBackground"
  */
-class FocusSurrounding @JvmOverloads constructor(
+class BackgroundBlurrerLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){

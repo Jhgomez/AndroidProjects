@@ -3,8 +3,6 @@ package okik.tech.tutorialcopy
 import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.RenderNode
 import android.os.Build
 import android.util.AttributeSet
@@ -12,7 +10,6 @@ import android.view.View
 import android.widget.FrameLayout
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.ColorUtils
-
 
 /**
  * This custom layout is expected to only have one child, which is usually a Linear or Constraint
@@ -40,9 +37,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
     private fun initComponents(focusArea: FocusArea) {
         // view at index 1
-        val focusSurrounding = FocusSurrounding(context)
+        val focusSurrounding = BackgroundBlurrerLayout(context)
         focusSurrounding.id = generateViewId()
-//        focusSurrounding.visibility = GONE
 
         val shapeWidth = focusArea.view.width +
                 focusArea.surroundingThickness.start +
@@ -132,12 +128,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
 //                    }
 
-                    focusedContent.setPosition(
-                        0,
-                        0,
-                        focusWidth,
-                        focusHeight
-                    )
+                    focusedContent.setPosition(0, 0, focusWidth, focusHeight)
 
                     focusedContent.translationX = translationX
                     focusedContent.translationY = translationY
@@ -167,7 +158,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         // this will be true only if user passed a rounded surrounding object, so we need to
         // render on canvas rounded background and then the view to focus
-        if (child is FocusSurrounding) {
+        if (child is BackgroundBlurrerLayout) {
             if (focusArea != null) {
                 if (focusArea!!.surroundingThickness.top > 0
                     || focusArea!!.surroundingThickness.bottom > 0
