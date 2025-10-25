@@ -86,8 +86,6 @@ class FocusArea private constructor(
         private var surroundingAreaPaint: Paint? = null
         private var surroundingAreaPadding: InnerPadding? = null
         private var surroundingAreaBackgroundDrawable: Drawable? = null
-        private var shouldApplyEffectToSurroundingThicknessBackground: Boolean = true
-        private var shouldApplyEffectToSurroundingThickness: Boolean = false
         private var shouldClipToBackground: Boolean = true
         private var outerAreaEffect: RenderEffect? = null
         private var overlayColor: Int = Color.TRANSPARENT
@@ -196,12 +194,21 @@ class FocusArea private constructor(
          * so a very useful use case would be to pass the same type of render effect and with same exact
          * values and define clip to background as false and define a background drawable, and add inner padding
          * if applying effects like blur, to give space to the effect to be fully visible, if used with blur
-         * it will create soft edges background shapes. If you need sharp edges then set this to true,
-         * if you set it to true, and render a completely transparent color/paint you will have a feel of
-         * a hollow/hole which is an exact copy of the surrounding views of the original content(below the
-         * render effect, and overlay of the outer area) and to this copy of the surrounding area you can
-         * apply effects, and a paint in combination of a drawable(at this time we asume you'd like to use
-         * shape drawables)
+         * it will create soft edges background shapes. If you need sharp edges that can have rounded corners
+         * and different shapes then set this to true, if you set it to true, and render a completely transparent
+         * color/paint you will have a feel of a hollow/hole which is an exact copy of the surrounding views of the
+         * original content(below the render effect and overlay of the outer area) and to this copy of
+         * the surrounding area you can apply effects, and a paint in combination of a drawable(at this
+         * time we assume you'd like to use shape drawables). Be aware the rendering process is always the
+         * same to the surrounding area, before drawing anything to the view that holds the focus area
+         * we draw the copy of either the below content with effect or the original content(without any effect)
+         * as explained above and then we draw the background which serves us as an overlay as we apply the
+         * paint to this drawable that in a normal/common use case it is the background and not an overlay
+         * but in our use case the actual background is the copy of the views below. In short
+         * if set to false render effect is applied to the surrounding underlying views as well as
+         * the surrounding area overlay. If set to true(default), render effect is applied to the copy of the
+         * original views only and no the drawable attached as background which is the overlay of the
+         * surrounding area
          */
         fun setShouldClipToBackground(shouldClipToBackground: Boolean): Builder {
             this.shouldClipToBackground = shouldClipToBackground
