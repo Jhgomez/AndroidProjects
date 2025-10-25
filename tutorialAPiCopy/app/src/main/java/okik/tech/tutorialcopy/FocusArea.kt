@@ -67,17 +67,6 @@ class FocusArea private constructor(
         val end: Float
     )
 
-    /**
-     * Lets you add padding to rounded corner surrounding, useful when applying overlay effects
-     * to rounded corner surrounding area
-     */
-    data class InnerPadding(
-        val top: Float,
-        val bottom: Float,
-        val start: Float,
-        val end: Float
-    )
-
     class Builder {
         private var view: View? = null
         private var viewLocation: IntArray? = null

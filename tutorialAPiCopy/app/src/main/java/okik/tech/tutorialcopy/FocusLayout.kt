@@ -21,7 +21,7 @@ import android.widget.FrameLayout
  * a view that lives behind the rest of the content, and is added automatically when view is
  * instantiated, it is referred to as "effectHolderBackground"
  */
-class BackgroundBlurrerLayout @JvmOverloads constructor(
+class FocusLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
