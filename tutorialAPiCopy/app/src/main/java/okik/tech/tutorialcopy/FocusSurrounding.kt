@@ -2,7 +2,6 @@ package okik.tech.tutorialcopy
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.RenderNode
@@ -29,20 +28,11 @@ class FocusSurrounding @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
     private var paint: Paint = Paint()
-
-    private var backgroundView: View? = null
     private var focusArea: FocusArea? = null
-
-    private val backgroundViewLocation = IntArray(2)
-    private val ownLocation = IntArray(2)
 
     private val blurNode = RenderNode("BlurView node")
     var backgroundViewRenderNode: RenderNode? = null
-    private var frameClearDrawable: Drawable? = null
-
-    init {
-//        setBackgroundColor(Color.TRANSPARENT) // custom viewgroups need this call otherwise they wont be visible
-    }
+    private var fallBackDrawable: Drawable? = null
 
     /**
      * If no background to the effect holder was set then this won't change the view in any way
@@ -72,6 +62,10 @@ class FocusSurrounding @JvmOverloads constructor(
     fun setEffectHolderBackgroundDrawable(drawable: Drawable) {
         background = drawable
 
+        if (drawable is ShapeDrawable) this.paint = drawable.paint
+    }
+
+    fun clipToBackground() {
         setClipToOutline(true)
         setOutlineProvider(object : ViewOutlineProvider() {
             override fun getOutline(view: View?, outline: Outline) {
@@ -79,8 +73,6 @@ class FocusSurrounding @JvmOverloads constructor(
                 outline.setAlpha(1f)
             }
         })
-
-        if (drawable is ShapeDrawable) this.paint = drawable.paint
     }
 
     /**
@@ -92,41 +84,41 @@ class FocusSurrounding @JvmOverloads constructor(
      * for the user if not aware of the behavior of this custom view but it also enables interesting
      * and more flexible UI possibilities
      */
-    fun setEffectHolderBackgroundPadding(padding: Int) {
+    fun setEffectHolderBackgroundPadding(
+        top: Int,
+        bottom: Int,
+        start: Int,
+        end: Int
+    ) {
         val backgroundDrawable = background
 
         if (backgroundDrawable is InsetDrawable) {
-            background = InsetDrawable(backgroundDrawable.drawable, padding)
+            background = InsetDrawable(backgroundDrawable.drawable, start, top, end, bottom)
 
         } else if (backgroundDrawable != null) {
-            val drawable = InsetDrawable(backgroundDrawable, padding)
+            val drawable = InsetDrawable(backgroundDrawable, start, top, end, bottom)
 
             background = drawable
         }
     }
 
-
-
-
-//    private var backgroundView: View? = null
-//    private var focusArea: FocusArea? = null
-//    private val blurNode = RenderNode("BlurView node")
-//    val backgroundViewRenderNode: RenderNode? = null
-//    private val frameClearDrawable: Drawable? = null
-
     fun renderNodeBlurController(
-        backgroundView: View,
         focusArea: FocusArea,
         backgroundViewRenderNode: RenderNode
     ) {
-        this.backgroundView = backgroundView
         this.focusArea = focusArea
         this.backgroundViewRenderNode = backgroundViewRenderNode
         setWillNotDraw(false)
+
+        // if should not clip to background the effect is applied to
+        // the drawing
+        if (!focusArea.shouldClipToBackground) {
+            setRenderEffect(focusArea.surroundingThicknessEffect)
+        }
     }
 
     override fun draw(canvas: Canvas) {
-        if (backgroundView != null && focusArea != null) {
+        if (focusArea != null) {
             hardwarePath(canvas)
         }
 
@@ -140,24 +132,16 @@ class FocusSurrounding @JvmOverloads constructor(
 
         // Draw on the system canvas
         canvas.drawRenderNode(blurNode)
-
-        if (focusArea!!.roundedCornerSurrounding!!.paint.color != Color.TRANSPARENT) {
-
-            canvas.drawColor(
-                ColorUtils.setAlphaComponent(
-                    focusArea!!.roundedCornerSurrounding!!.paint.color,
-                    focusArea!!.roundedCornerSurrounding!!.paint.alpha
-                )
-            )
-        }
     }
 
     private fun recordBackgroundViews() {
-        blurNode.setRenderEffect(focusArea!!.surroundingThicknessEffect)
-
         val recordingCanvas = blurNode.beginRecording()
-        if (frameClearDrawable != null) {
-            frameClearDrawable!!.draw(recordingCanvas)
+        if (fallBackDrawable != null) {
+            fallBackDrawable!!.draw(recordingCanvas)
+        }
+
+        if (focusArea!!.shouldClipToBackground) {
+            blurNode.setRenderEffect(focusArea!!.surroundingThicknessEffect)
         }
 
         recordingCanvas.translate(
@@ -171,6 +155,6 @@ class FocusSurrounding @JvmOverloads constructor(
     }
 
     fun setFallbackBackground(frameClearDrawable: Drawable?) {
-        this.frameClearDrawable = frameClearDrawable
+        this.fallBackDrawable = frameClearDrawable
     }
 }
