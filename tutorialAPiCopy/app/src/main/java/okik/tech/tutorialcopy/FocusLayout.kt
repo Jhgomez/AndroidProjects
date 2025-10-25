@@ -26,7 +26,7 @@ class FocusLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
     private var paint: Paint = Paint()
-    private var focusArea: FocusArea? = null
+    private var backgroundSettings: BlurBackgroundSettings? = null
 
     private val blurNode = RenderNode("BlurView node")
     var backgroundViewRenderNode: RenderNode? = null
@@ -101,22 +101,37 @@ class FocusLayout @JvmOverloads constructor(
     }
 
     fun renderNodeBlurController(
-        focusArea: FocusArea,
+        backgroundSettings: BlurBackgroundSettings,
         backgroundViewRenderNode: RenderNode
     ) {
-        this.focusArea = focusArea
+        this.backgroundSettings = backgroundSettings
         this.backgroundViewRenderNode = backgroundViewRenderNode
         setWillNotDraw(false)
 
+        setEffectHolderBackgroundDrawable(backgroundSettings.backgroundDrawable)
+
+        setEffectHolderBackgroundPadding(
+            backgroundSettings.padding.top.toInt(),
+            backgroundSettings.padding.bottom.toInt(),
+            backgroundSettings.padding.start.toInt(),
+            backgroundSettings.padding.end.toInt()
+        )
+
+        if (backgroundSettings.shouldClipToBackground) {
+            clipToBackground()
+        }
+
+        setEffectHolderBackgroundPaint(backgroundSettings.backgroundOverlayPaint)
+
         // if should not clip to background the effect is applied to
         // the drawing
-        if (!focusArea.shouldClipToBackground) {
-            setRenderEffect(focusArea.surroundingThicknessEffect)
+        if (!backgroundSettings.shouldClipToBackground) {
+            setRenderEffect(backgroundSettings.renderEffect)
         }
     }
 
     override fun draw(canvas: Canvas) {
-        if (focusArea != null) {
+        if (backgroundSettings != null) {
             hardwarePath(canvas)
         }
 
@@ -138,14 +153,11 @@ class FocusLayout @JvmOverloads constructor(
             fallBackDrawable!!.draw(recordingCanvas)
         }
 
-        if (focusArea!!.shouldClipToBackground) {
-            blurNode.setRenderEffect(focusArea!!.surroundingThicknessEffect)
+        if (backgroundSettings!!.shouldClipToBackground) {
+            blurNode.setRenderEffect(backgroundSettings!!.renderEffect)
         }
 
-        recordingCanvas.translate(
-            -focusArea!!.viewLocation[0].toFloat() + focusArea!!.surroundingThickness.start,
-            -focusArea!!.viewLocation[1].toFloat() + focusArea!!.surroundingThickness.top,
-        )
+        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas)
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 
