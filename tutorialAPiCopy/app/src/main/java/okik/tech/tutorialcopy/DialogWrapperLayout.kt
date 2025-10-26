@@ -2,13 +2,9 @@ package okik.tech.tutorialcopy
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
-import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.RenderEffect
 import android.graphics.RenderNode
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.Gravity
@@ -65,7 +61,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         cloneViewLocationAndSize(focusArea)
 
-        setUpDialog(
+        setUpDialogAndBridgePath(
             focusArea,
             dialogGravity,
             dialogXOffsetDp,
@@ -110,19 +106,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
         constraintSet.connect(referenceView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
 
         constraintSet.applyTo(this)
-
-//        // TODO lets see if we can actually pass this from somewhere later, which would give user more control
-//        // constraints and margins will be set up later in the flow
-//        val dialogContainer = RoundContainerTwo(context)
-//        dialogContainer.id = generateViewId()
-//
-//        // TODO pass this params from somewhere later
-//        dialogContainer.layoutParams = LayoutParams(
-//            LayoutParams.WRAP_CONTENT,
-//            LayoutParams.WRAP_CONTENT
-//        )
-//
-//        addView(dialogContainer)
     }
 
     /**
@@ -142,11 +125,11 @@ class DialogWrapperLayout @JvmOverloads constructor(
         params.height = fa.view.height
     }
 
-    private fun setUpDialog(
+    private fun setUpDialogAndBridgePath(
         fa: FocusArea,
         gravity: Int,
-        dialogXOffsetDp: Float,
-        dialogYOffsetDp: Float,
+        dialogXMarginDp: Float,
+        dialogYMarginDp: Float,
         originOffsetPercent: Float,
         destinationOffsetPercent: Float,
         shouldCenterOnMainAxis: Boolean,
@@ -157,13 +140,13 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         val dialogXOffsetPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
-            dialogXOffsetDp,
+            dialogXMarginDp,
             resources.displayMetrics
         )
 
         val dialogYOffsetPx = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
-            dialogYOffsetDp,
+            dialogYMarginDp,
             resources.displayMetrics
         )
 
@@ -178,7 +161,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 val yMargin = fa.viewLocation[1] + dialogYOffsetPx
 
                 if (gravity == Gravity.START) {
-                    val startX = fa.viewLocation[0]
+                    val startX = fa.viewLocation[0] - fa.surroundingThickness.start
                     val startY = fa.viewLocation[1] + viewHeight * originOffsetPercent
 //
                     path.moveTo(startX.toFloat(), startY)
@@ -235,7 +218,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         visibility = VISIBLE
                     }
                 } else {
-                    val startX = fa.viewLocation[0] + viewWidth
+                    val startX = fa.viewLocation[0] + viewWidth + fa.surroundingThickness.end
                     val startY = fa.viewLocation[1] + viewHeight * originOffsetPercent
 
                     path.moveTo(startX.toFloat(), startY)
@@ -293,7 +276,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                 if (gravity == Gravity.TOP) {
                     val startX = fa.viewLocation[0] + viewWidth * originOffsetPercent
-                    val startY = fa.viewLocation[1]
+                    val startY = fa.viewLocation[1] - fa.surroundingThickness.top
 
                     path.moveTo(startX, startY.toFloat())
 
@@ -345,7 +328,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                     }
                 } else {
                     val startX = fa.viewLocation[0] + viewWidth * originOffsetPercent
-                    val startY = fa.viewLocation[1] + viewHeight
+                    val startY = fa.viewLocation[1] + viewHeight + fa.surroundingThickness.bottom
 
                     path.moveTo(startX, startY.toFloat())
 
