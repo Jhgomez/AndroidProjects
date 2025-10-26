@@ -1,6 +1,8 @@
 package okik.tech.tutorialcopy
 
+import android.app.Activity
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
@@ -38,6 +40,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
     fun renderRoundedDialog(
         focusArea: FocusArea,
+        backgroundSettings: BlurBackgroundSettings,
+        renderNode: RenderNode,
         dialogGravity: Int,
         dialogXOffsetDp: Float,
         dialogYOffsetDp: Float,
@@ -46,11 +50,16 @@ class DialogWrapperLayout @JvmOverloads constructor(
         shouldCenterOnMainAxis: Boolean,
         dialog: View
     ) {
+        val bridgeView = BridgeView(context)
+        bridgeView.id = generateViewId()
+
         if (isEmpty()) {
             addReferenceView()
 
             // add dialog
             dialog.id = generateViewId()
+
+            addView(bridgeView)
             addView(dialog)
         }
 
@@ -66,6 +75,25 @@ class DialogWrapperLayout @JvmOverloads constructor(
             shouldCenterOnMainAxis,
             dialog
         )
+
+
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(this)
+
+        constraintSet.connect(bridgeView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+        constraintSet.connect(bridgeView.id, ConstraintSet.START, id, ConstraintSet.START)
+
+        bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+
+        bridgeView.renderNodeBlurController(
+            backgroundSettings,
+            renderNode,
+            path
+        )
+
+        if (context is Activity) {
+            bridgeView.setFallbackBackground((context as Activity).window.decorView.background)
+        }
     }
 
     private fun addReferenceView() {
