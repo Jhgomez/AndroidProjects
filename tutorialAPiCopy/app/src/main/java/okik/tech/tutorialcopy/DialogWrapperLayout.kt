@@ -346,7 +346,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         difference = if (difference < 0) 0 else difference
 
                         val firstVertexX = difference + dialog.layoutParams.width * destinationOffsetPercent
-                        val firstVertexY = startY + yMargin
+                        val firstVertexY = startY + yMargin - fa.surroundingThickness.bottom
 
                         path.lineTo(firstVertexX, firstVertexY)
 
@@ -364,7 +364,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
 
                         val firstVertexX = xMargin + dialog.layoutParams.width * destinationOffsetPercent
-                        val firstVertexY = startY + yMargin
+                        val firstVertexY = startY + yMargin - fa.surroundingThickness.bottom
 
                         path.lineTo(firstVertexX, firstVertexY)
 
