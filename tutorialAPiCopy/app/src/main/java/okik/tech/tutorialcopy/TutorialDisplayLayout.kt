@@ -49,8 +49,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         val dialog = FocusLayout(context)
 
         dialog.layoutParams = ConstraintLayout.LayoutParams(
-            LayoutParams.MATCH_PARENT,
-            300
+            900,
+            530
         )
 
         val content = DialogContentBinding.inflate(LayoutInflater.from(context))
@@ -67,7 +67,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             resources.displayMetrics
         )
 
-        content.root.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        content.root.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, 530)
 
         (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
 
@@ -87,7 +87,9 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             focusArea.surroundingAreaPaint,
             focusArea.surroundingAreaPadding,
             { recordingCanvas ->
-
+                val pos = IntArray(2)
+                dialog.getLocationOnScreen(pos)
+                recordingCanvas.translate(-pos[0].toFloat(), -pos[1].toFloat())
             }
         )
 
@@ -102,16 +104,27 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         val dialogWrapperLayout = DialogWrapperLayout(context)
 
+        val wrapperBackgroundSettings = BlurBackgroundSettings(
+            focusArea.surroundingThicknessEffect,
+            focusArea.shouldClipToBackground,
+            focusArea.surroundingAreaBackgroundDrawable,
+            focusArea.surroundingAreaPaint,
+            focusArea.surroundingAreaPadding,
+            { recordingCanvas ->
+
+            }
+        )
+
         dialogWrapperLayout.renderRoundedDialog(
             focusArea,
-            backgroundSettings,
+            wrapperBackgroundSettings,
             if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect,
             Gravity.BOTTOM,
             0f,
             300f,
             .5f,
             .5f,
-            true,
+            false,
             dialog
         )
 
