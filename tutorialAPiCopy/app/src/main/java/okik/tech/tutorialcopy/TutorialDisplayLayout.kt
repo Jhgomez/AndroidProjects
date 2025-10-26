@@ -16,6 +16,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
 import okik.tech.tutorialcopy.databinding.DialogContentBinding
 
@@ -45,9 +46,12 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     fun renderFocusAreaWithDialog(focusArea: FocusArea) {
         this.renderFocusArea(focusArea)
 
-        val tutorialLayout = BlurBackgroundLayout(context)
+        val dialog = FocusLayout(context)
+
+//        dialog.layoutParams = ConstraintLayout.LayoutParams(900, 450)
 
         val content = DialogContentBinding.inflate(LayoutInflater.from(context))
+        content.root.layoutParams = LayoutParams(900, 450)
 
         val widthInPixels = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -69,17 +73,28 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
 
-        tutorialLayout.addView(content.root)
+        content.root.setPadding(
+            focusArea.surroundingAreaPadding.start.toInt(),
+            focusArea.surroundingAreaPadding.top.toInt(),
+            focusArea.surroundingAreaPadding.end.toInt(),
+            focusArea.surroundingAreaPadding.bottom.toInt()
+        )
+
+        dialog.addView(content.root)
 
         val backgroundSettings = BlurBackgroundSettings(
             focusArea.surroundingThicknessEffect,
             focusArea.shouldClipToBackground,
             focusArea.surroundingAreaBackgroundDrawable,
-            focusArea.surroundingAreaPadding
+            focusArea.surroundingAreaPaint,
+            focusArea.surroundingAreaPadding,
+            { recordingCanvas ->
+
+            }
         )
 
         if (context is Activity) {
-            tutorialLayout.setFallbackBackground((context as Activity).window.decorView.background)
+            dialog.setFallbackBackground((context as Activity).window.decorView.background)
         }
 
         val n = 16f
@@ -92,20 +107,29 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         val shapeDrawable = ShapeDrawable(roundShape)
 
-        tutorialLayout.customBackground(focusArea.surroundingAreaBackgroundDrawable)
-        tutorialLayout.setBackgroundDrawablePaint(focusArea.surroundingAreaPaint)
-        tutorialLayout.clipToBackground(focusArea.shouldClipToBackground)
+        dialog.renderNodeBlurController(
+            backgroundSettings,
+            contentCopy
+        )
 
-        tutorialLayout.renderNodeBlurController(
-            contentCopy,
-            backgroundSettings
+        val dialogWrapperLayout = DialogWrapperLayout(context)
+
+        dialogWrapperLayout.renderRoundedDialog(
+            focusArea,
+            Gravity.BOTTOM,
+            0f,
+            0f,
+            .5f,
+            .5f,
+            false,
+            dialog
         )
 
         val popi = PopupWindow(
-            tutorialLayout,
+            dialogWrapperLayout,
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
-            false // closes on outside touche if true
+            true // closes on outside touche if true
         )
 
         popi.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
