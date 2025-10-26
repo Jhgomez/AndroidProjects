@@ -48,10 +48,12 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         val dialog = FocusLayout(context)
 
-//        dialog.layoutParams = ConstraintLayout.LayoutParams(900, 450)
+        dialog.layoutParams = ConstraintLayout.LayoutParams(
+            LayoutParams.MATCH_PARENT,
+            300
+        )
 
         val content = DialogContentBinding.inflate(LayoutInflater.from(context))
-        content.root.layoutParams = LayoutParams(900, 450)
 
         val widthInPixels = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_DIP,
@@ -65,11 +67,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             resources.displayMetrics
         )
 
-        // always specify the width and height of the content of the dialog like this
-        content.root.layoutParams = LayoutParams(
-            widthInPixels.toInt(),
-            LayoutParams.MATCH_PARENT
-        )
+        content.root.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
 
         (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
 
@@ -97,31 +95,23 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             dialog.setFallbackBackground((context as Activity).window.decorView.background)
         }
 
-        val n = 16f
-
-        val roundShape = RoundRectShape(
-            floatArrayOf(n, n, n, n, n, n, n ,n),
-            null,
-            null
-        )
-
-        val shapeDrawable = ShapeDrawable(roundShape)
-
         dialog.renderNodeBlurController(
             backgroundSettings,
-            contentCopy
+            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
         )
 
         val dialogWrapperLayout = DialogWrapperLayout(context)
 
         dialogWrapperLayout.renderRoundedDialog(
             focusArea,
+            backgroundSettings,
+            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect,
             Gravity.BOTTOM,
             0f,
-            0f,
+            300f,
             .5f,
             .5f,
-            false,
+            true,
             dialog
         )
 
