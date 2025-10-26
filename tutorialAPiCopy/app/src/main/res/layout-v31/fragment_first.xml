@@ -45,14 +45,24 @@
             />
 
         <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                android:text="some text again"
-                android:textColor="@color/white"
-                android:textSize="32sp"
-                android:layout_marginBottom="32dp"/>
+            android:id="@+id/thete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:text="some text again"
+            android:textColor="@color/black"
+            android:textSize="32sp"
+            android:layout_marginBottom="32dp"/>
+
+        <View
+            android:id="@+id/block"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            app:layout_constraintBottom_toTopOf="@id/thete"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginBottom="32dp"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
 </okik.tech.tutorialcopy.TutorialDisplayLayout>

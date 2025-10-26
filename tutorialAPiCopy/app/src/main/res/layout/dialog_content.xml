@@ -22,13 +22,12 @@
             android:layout_height="wrap_content"
             app:layout_constraintTop_toTopOf="@id/aview"
             app:layout_constraintStart_toEndOf="@id/aview"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:background="@color/black">
+            app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
+                android:textColor="@color/black"
                 android:layout_marginTop="64dp"
                 android:maxLines="8"
                 android:text="Some text I dont care about would bln bln bln nl nlm"/>
