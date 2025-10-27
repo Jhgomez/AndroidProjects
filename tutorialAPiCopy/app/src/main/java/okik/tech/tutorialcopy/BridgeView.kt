@@ -96,7 +96,7 @@ class BridgeView @JvmOverloads constructor(
             blurNode.setRenderEffect(backgroundSettings!!.renderEffect)
         }
 
-        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas)
+        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas, this)
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 

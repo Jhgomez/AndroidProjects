@@ -4,6 +4,7 @@ import android.graphics.Paint
 import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
+import android.view.View
 
 data class BlurBackgroundSettings(
     val renderEffect: RenderEffect?,
@@ -11,5 +12,5 @@ data class BlurBackgroundSettings(
     val backgroundDrawable: Drawable,
     val backgroundOverlayPaint: Paint,
     val padding: InnerPadding,
-    val renderCanvasPositionCommand: (RecordingCanvas) -> Unit
+    val renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit
 )
