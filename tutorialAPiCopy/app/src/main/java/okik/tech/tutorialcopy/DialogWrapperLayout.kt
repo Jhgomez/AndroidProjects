@@ -174,7 +174,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
                         dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
                         dialogCs.connect(dialog.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.setHorizontalBias(dialog.id, 1f)
+                        dialogCs.setVerticalBias(dialog.id, 1f)
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
 //
                         val verticalCenter = resources.displayMetrics.heightPixels/2
@@ -187,7 +187,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         path.lineTo(firstVertexX, firstVertexY)
 
-                        val secondVertexX = firstVertexX
+                        val secondVertexX = firstVertexX  + fa.surroundingThickness.start
                         val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
 
                         path.lineTo(secondVertexX, secondVertexY)
@@ -196,20 +196,22 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         dialogCs.applyTo(this)
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.setHorizontalBias(dialog.id, 1f)
+                        dialogCs.setVerticalBias(dialog.id, 1f)
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
+
                         dialogCs.connect(
                             dialog.id, ConstraintSet.RIGHT,
                             referenceView.id, ConstraintSet.LEFT,
                             xMargin.toInt()
                         )
 
-                        val firstVertexX = startX - xMargin
+                        val firstVertexX = startX
                         val firstVertexY = yMargin + dialog.layoutParams.height * destinationOffsetPercent
 
                         path.lineTo(firstVertexX, firstVertexY)
 
-                        val secondVertexX = firstVertexX
+                        val secondVertexX = firstVertexX  + fa.surroundingThickness.start
                         val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
 
                         path.lineTo(secondVertexX, secondVertexY)
@@ -226,9 +228,10 @@ class DialogWrapperLayout @JvmOverloads constructor(
                     if (shouldCenterOnMainAxis) {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
                         dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
+                        dialogCs.setVerticalBias(dialog.id, 0f)
+                        dialogCs.setHorizontalBias(dialog.id, 0f)
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.setHorizontalBias(dialog.id, 0f)
 
                         val verticalCenter = resources.displayMetrics.heightPixels/2
                         var difference = verticalCenter - dialog.layoutParams.height/2
@@ -240,7 +243,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         path.lineTo(firstVertexX, firstVertexY)
 
-                        val secondVertexX = firstVertexX
+                        val secondVertexX = firstVertexX - fa.surroundingThickness.end
                         val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
 
                         path.lineTo(secondVertexX, secondVertexY)
@@ -250,13 +253,14 @@ class DialogWrapperLayout @JvmOverloads constructor(
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
+                        dialogCs.connect(dialog.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
 
                         val firstVertexX = startX + xMargin
                         val firstVertexY = yMargin + dialog.layoutParams.height * destinationOffsetPercent
 
                         path.lineTo(firstVertexX, firstVertexY)
 
-                        val secondVertexX = firstVertexX
+                        val secondVertexX = firstVertexX - fa.surroundingThickness.end
                         val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
 
                         path.lineTo(secondVertexX, secondVertexY)
@@ -295,7 +299,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.lineTo(firstVertexX, firstVertexY)
 
                         val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY
+                        val secondVertexY = firstVertexY + fa.surroundingThickness.top
 
                         path.lineTo(secondVertexX, secondVertexY)
                         path.close()
@@ -311,7 +315,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.lineTo(firstVertexX, firstVertexY)
 
                         val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY
+                        val secondVertexY = firstVertexY + fa.surroundingThickness.top
 
                         path.lineTo(secondVertexX, secondVertexY)
                         path.close()
@@ -338,12 +342,12 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         difference = if (difference < 0) 0 else difference
 
                         val firstVertexX = difference + dialog.layoutParams.width * destinationOffsetPercent
-                        val firstVertexY = startY + yMargin - fa.surroundingThickness.bottom
+                        val firstVertexY = startY + yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
 
                         val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY
+                        val secondVertexY = firstVertexY - fa.surroundingThickness.top
 
                         path.lineTo(secondVertexX, secondVertexY)
                         path.close()
@@ -354,12 +358,12 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
 
                         val firstVertexX = xMargin + dialog.layoutParams.width * destinationOffsetPercent
-                        val firstVertexY = startY + yMargin - fa.surroundingThickness.bottom
+                        val firstVertexY = startY + yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
 
                         val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY
+                        val secondVertexY = firstVertexY - fa.surroundingThickness.top
 
                         path.lineTo(secondVertexX, secondVertexY)
                         path.close()
