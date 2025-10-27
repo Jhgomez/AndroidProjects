@@ -6,7 +6,7 @@ import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
 import android.view.View
 
-data class BlurBackgroundSettings(
+data class BackgroundSettings(
     val renderEffect: RenderEffect?,
     val shouldClipToBackground: Boolean,
     val backgroundDrawable: Drawable,

@@ -26,7 +26,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
     private var paint: Paint = Paint()
-    private var backgroundSettings: BlurBackgroundSettings? = null
+    private var backgroundSettings: BackgroundSettings? = null
 
     private val blurNode = RenderNode("BlurView node")
     var backgroundViewRenderNode: RenderNode? = null
@@ -102,7 +102,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     }
 
     fun setBackgroundConfigs(
-        backgroundSettings: BlurBackgroundSettings,
+        backgroundSettings: BackgroundSettings,
         backgroundViewRenderNode: RenderNode
     ) {
         this.backgroundSettings = backgroundSettings

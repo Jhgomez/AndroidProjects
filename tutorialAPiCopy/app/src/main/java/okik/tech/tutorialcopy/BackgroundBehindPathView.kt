@@ -4,6 +4,8 @@ import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RecordingCanvas
+import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
@@ -12,12 +14,15 @@ import android.view.View
 /**
  * This component draws a render node and draws a path on top of it
  */
-class BackgroundInPathView @JvmOverloads constructor(
+class BackgroundBehindPathView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs){
     private var paint: Paint = Paint()
-    private var backgroundSettings: BackgroundSettings? = null
+    private var renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _, _ -> }
+    private var renderEffect: RenderEffect? = null
+
+    private var setEffectOnBackgroundOnly = true
     private var shouldClipPath: Boolean = true
 
     private val blurNode = RenderNode("UnderlyingView")
@@ -34,28 +39,35 @@ class BackgroundInPathView @JvmOverloads constructor(
     }
 
     fun setBackgroundConfigs(
-        backgroundSettings: BackgroundSettings,
         backgroundViewRenderNode: RenderNode,
         path: Path,
-        shouldClipPath: Boolean
+        pathPaint: Paint,
+        shouldClipPath: Boolean,
+        setEffectOnBackgroundOnly: Boolean,
+        renderEffect: RenderEffect?,
+        renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit
     ) {
-        this.backgroundSettings = backgroundSettings
+        this.setEffectOnBackgroundOnly = setEffectOnBackgroundOnly
         this.backgroundViewRenderNode = backgroundViewRenderNode
         this.path = path
         this.shouldClipPath = shouldClipPath
+        this.renderCanvasPositionCommand = renderCanvasPositionCommand
         setWillNotDraw(false)
 
-        this.paint = backgroundSettings.backgroundOverlayPaint
+        this.paint = pathPaint
 
-        // if should not clip to background the effect is applied to
-        // the drawing
-        if (!backgroundSettings.shouldClipToBackground) {
-            setRenderEffect(backgroundSettings.renderEffect)
+//        // if should not clip to background the effect is applied to
+//        // the drawing
+//        if (!backgroundSettings.shouldClipToBackground) {
+//            setRenderEffect(backgroundSettings.renderEffect)
+//        }
+        if (!setEffectOnBackgroundOnly) {
+            setRenderEffect(renderEffect)
         }
     }
 
     override fun draw(canvas: Canvas) {
-        if (path != null && backgroundSettings != null) {
+        if (path != null) {
             if (shouldClipPath) {
                 canvas.clipPath(path!!)
             }
@@ -84,11 +96,11 @@ class BackgroundInPathView @JvmOverloads constructor(
             fallBackDrawable!!.draw(recordingCanvas)
         }
 
-        if (backgroundSettings!!.shouldClipToBackground) {
-            blurNode.setRenderEffect(backgroundSettings!!.renderEffect)
+        if (setEffectOnBackgroundOnly) {
+            blurNode.setRenderEffect(renderEffect)
         }
 
-        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas, this)
+        renderCanvasPositionCommand.invoke(recordingCanvas, this)
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 
