@@ -3,8 +3,10 @@ package okik.tech.tutorialcopy
 import android.app.Dialog
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RenderEffect
 import android.view.Gravity
 import android.view.View
+import kotlin.contracts.Effect
 
 class FocusDialog private constructor(
     val dialogBackgroundPaint: Paint,
@@ -15,10 +17,11 @@ class FocusDialog private constructor(
     val gravity: Int,
     val dialogXMarginDp: Float,
     val dialogYMarginDp: Float,
-    val originOffsetPercent: Float,
-    val destinationOffsetPercent: Float,
+    val originOffsetPercent: Double,
+    val destinationOffsetPercent: Double,
     val shouldCenterOnMainAxis: Boolean,
-    val view: View
+    val view: View,
+    val backgroundRenderEffect: RenderEffect?
 ){
     class Builder {
         var dialogBackgroundPaint: Paint? = null
@@ -28,12 +31,13 @@ class FocusDialog private constructor(
         var referenceViewLocation: IntArray? = null
         var shouldClipToBackground: Boolean = true
         var gravity: Int = Gravity.BOTTOM
-        var dialogXMarginDp: Float = 0f
-        var dialogYMarginDp: Float = 0f
-        var originOffsetPercent: Float = 0.5f
-        var destinationOffsetPercent: Float = 0.5f
+        var dialogXMarginDp: Short = 0
+        var dialogYMarginDp: Short = 0
+        var originOffsetPercent: Double = 0.5
+        var destinationOffsetPercent: Double = 0.5
         var shouldCenterOnMainAxis: Boolean = false
         var view: View? = null
+        var backgroundRenderEffect: RenderEffect? = null
 
         fun setDialogBackgroundPaint(dialogBackgroundPaint: Paint): Builder{
             this.dialogBackgroundPaint = dialogBackgroundPaint
@@ -51,19 +55,19 @@ class FocusDialog private constructor(
             this.gravity = gravity
             return this
         }
-        fun setDialogXMarginDp(dialogXMarginDp: Float): Builder{
+        fun setDialogXMarginDp(dialogXMarginDp: Short): Builder{
             this.dialogXMarginDp = dialogXMarginDp
             return this
         }
-        fun setDialogYMarginDp(dialogYMarginDp: Float): Builder{
+        fun setDialogYMarginDp(dialogYMarginDp: Short): Builder{
             this.dialogYMarginDp = dialogYMarginDp
             return this
         }
-        fun setOriginOffsetPercent(originOffsetPercent: Float): Builder{
+        fun setOriginOffsetPercent(originOffsetPercent: Double): Builder{
             this.originOffsetPercent = originOffsetPercent
             return this
         }
-        fun setDestinationOffsetPercent(destinationOffsetPercent: Float): Builder{
+        fun setDestinationOffsetPercent(destinationOffsetPercent: Double): Builder{
             this.destinationOffsetPercent = destinationOffsetPercent
             return this
         }
@@ -79,6 +83,11 @@ class FocusDialog private constructor(
 
         fun setReferenceView(view: View): Builder {
             this.referenceView = view
+            return this
+        }
+
+        fun setBackgroundRenderEffect(backgroundRenderEffect: RenderEffect): Builder  {
+            this.backgroundRenderEffect = backgroundRenderEffect
             return this
         }
 
@@ -114,12 +123,13 @@ class FocusDialog private constructor(
                 referenceViewHeight!!,
                 shouldClipToBackground,
                 gravity,
-                dialogXMarginDp,
-                dialogYMarginDp,
+                dpToPx(dialogXMarginDp, this.referenceView!!.context),
+                dpToPx(dialogYMarginDp, this.referenceView!!.context),
                 originOffsetPercent,
                 destinationOffsetPercent,
                 shouldCenterOnMainAxis,
-                view!!
+                view!!,
+                backgroundRenderEffect
             )
         }
     }

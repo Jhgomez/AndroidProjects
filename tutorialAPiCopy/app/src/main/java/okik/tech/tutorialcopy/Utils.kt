@@ -6,7 +6,7 @@ import android.graphics.drawable.shapes.RoundRectShape
 import android.util.TypedValue
 import android.view.View
 
-fun dpToPx(dp: Float, context: Context): Float {
+fun dpToPx(dp: Short, context: Context): Float {
     return TypedValue.applyDimension(
         TypedValue.COMPLEX_UNIT_DIP,
         dp.toFloat(),

@@ -92,15 +92,21 @@ class FocusArea private constructor(
     class Builder {
         private var view: View? = null
         private var viewLocation: IntArray? = null
-        private var surroundingThickness: SurroundingThickness? = null
         private var surroundingThicknessEffect: RenderEffect? = null
         private var surroundingAreaPaint: Paint? = null
-        private var surroundingAreaPadding: InnerPadding? = null
         private var surroundingAreaBackgroundDrawable: Drawable? = null
         private var shouldClipToBackground: Boolean = true
         private var outerAreaEffect: RenderEffect? = null
         private var overlayColor: Int = Color.TRANSPARENT
         private var overlayAlpha: Short = 125
+        private var thickTop: Short = 0
+        private var thickBottom: Short = 0
+        private var thickStart: Short = 0
+        private var thickEnd: Short = 0
+        private var padTop: Short = 0
+        private var padBottom: Short = 0
+        private var padStart: Short = 0
+        private var padEnd: Short = 0
 
 
         fun setView(view: View): Builder {
@@ -116,8 +122,11 @@ class FocusArea private constructor(
         /**
          * @param surroundingThickness value is considered to be DP(it will be converted to PX automatically)
          */
-        fun setSurroundingThickness(surroundingThickness: SurroundingThickness): Builder {
-            this.surroundingThickness = surroundingThickness
+        fun setSurroundingThickness(top: Short, bottom: Short, start: Short, end: Short): Builder {
+            this.thickTop = top
+            this.thickBottom = bottom
+            this.thickStart = start
+            this.thickEnd = end
             return this
         }
 
@@ -171,8 +180,11 @@ class FocusArea private constructor(
          * work as expected when clip to background is false, when clip to padding is true you should use
          * different tick values for the edge you need to be a different size
          */
-        fun setSurroundingAreaPadding(surroundingAreaPadding: InnerPadding): Builder {
-            this.surroundingAreaPadding = surroundingAreaPadding
+        fun setSurroundingAreaPadding(top: Short, bottom: Short, start: Short, end: Short): Builder {
+            this.padTop = top
+            this.padBottom = bottom
+            this.padStart = start
+            this.padEnd = end
             return this
         }
 
@@ -243,28 +255,20 @@ class FocusArea private constructor(
                 throw IllegalStateException("Location can only contain two values, x and y")
             }
 
-            if (surroundingThickness == null) {
-                surroundingThickness = SurroundingThickness(0f, 0f, 0f, 0f)
-            } else {
-                surroundingThickness = SurroundingThickness(
-                    dpToPx(surroundingThickness!!.top, this.view!!.context),
-                    dpToPx(surroundingThickness!!.bottom, this.view!!.context),
-                    dpToPx(surroundingThickness!!.start, this.view!!.context),
-                    dpToPx(surroundingThickness!!.end, this.view!!.context)
-                )
-            }
+            val surroundingThickness = SurroundingThickness(
+                dpToPx(thickTop, this.view!!.context),
+                dpToPx(thickBottom, this.view!!.context),
+                dpToPx(thickStart, this.view!!.context),
+                dpToPx(thickEnd, this.view!!.context)
+            )
 
 
-            if (surroundingAreaPadding == null) {
-                surroundingAreaPadding = InnerPadding(0f, 0f, 0f, 0f)
-            } else {
-                surroundingAreaPadding = InnerPadding(
-                    dpToPx(surroundingAreaPadding!!.top, this.view!!.context),
-                    dpToPx(surroundingAreaPadding!!.bottom, this.view!!.context),
-                    dpToPx(surroundingAreaPadding!!.start, this.view!!.context),
-                    dpToPx(surroundingAreaPadding!!.end, this.view!!.context)
-                )
-            }
+            val surroundingAreaPadding = InnerPadding(
+                dpToPx(padTop, this.view!!.context),
+                dpToPx(padBottom, this.view!!.context),
+                dpToPx(padStart, this.view!!.context),
+                dpToPx(padEnd, this.view!!.context)
+            )
 
             if (surroundingAreaBackgroundDrawable == null) {
                 surroundingAreaBackgroundDrawable = dispatchDefaultDrawable(this.view!!.context)
@@ -283,10 +287,10 @@ class FocusArea private constructor(
             return FocusArea(
                 view!!,
                 viewLocation!!,
-                surroundingThickness!!,
+                surroundingThickness,
                 surroundingThicknessEffect,
                 surroundingAreaPaint!!,
-                surroundingAreaPadding!!,
+                surroundingAreaPadding,
                 surroundingAreaBackgroundDrawable!!,
                 shouldClipToBackground,
                 outerAreaEffect,
