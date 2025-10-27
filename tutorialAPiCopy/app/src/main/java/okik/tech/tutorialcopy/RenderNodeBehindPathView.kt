@@ -14,7 +14,7 @@ import android.view.View
 /**
  * This component draws a render node and draws a path on top of it
  */
-class BackgroundBehindPathView @JvmOverloads constructor(
+class RenderNodeBehindPathView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs){

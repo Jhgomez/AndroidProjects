@@ -44,7 +44,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
         shouldCenterOnMainAxis: Boolean,
         dialog: View
     ) {
-        val bridgeView = BackgroundBehindPathView(context)
+        val bridgeView = RenderNodeBehindPathView(context)
         bridgeView.id = generateViewId()
 
         if (isEmpty()) {
