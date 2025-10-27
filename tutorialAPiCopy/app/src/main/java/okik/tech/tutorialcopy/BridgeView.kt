@@ -7,7 +7,7 @@ import android.graphics.Path
 import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
-import android.widget.FrameLayout
+import android.view.View
 
 /**
  * This component is just a frame layout wrapped in a rounded corner shape, the difference
@@ -20,28 +20,24 @@ import android.widget.FrameLayout
 class BridgeView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
-) : FrameLayout(context, attrs){
+) : View(context, attrs){
     private var paint: Paint = Paint()
-    private var path: Path? = null
-
     private var backgroundSettings: BlurBackgroundSettings? = null
 
     private val blurNode = RenderNode("UnderlyingView")
     var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
 
+    private var path: Path? = null
+
     /**
      * If no background to the effect holder was set then this won't change the view in any way
      */
-    fun setEffectHolderBackgroundPaint(paint: Paint) {
-        this.paint.alpha = paint.alpha
-        this.paint.style = paint.style
-        this.paint.strokeWidth = paint.strokeWidth
-        this.paint.isAntiAlias = true
-        this.paint.color = paint.color
+    fun setPathPaint(paint: Paint) {
+        this.paint = paint
     }
 
-    fun renderNodeBlurController(
+    fun setBackgroundConfigs(
         backgroundSettings: BlurBackgroundSettings,
         backgroundViewRenderNode: RenderNode,
         path: Path
@@ -61,23 +57,22 @@ class BridgeView @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-
         if (path != null) {
             canvas.clipPath(path!!)
         }
 
         if (backgroundSettings != null) {
-            hardwarePath(canvas)
+            drawBackgroundRenderNode(canvas)
         }
 
         if (path != null) {
             canvas.drawPath(path!!, paint)
         }
 
-        super.draw(canvas)
+//        super.draw(canvas)
     }
 
-    private fun hardwarePath(canvas: Canvas) {
+    private fun drawBackgroundRenderNode(canvas: Canvas) {
         blurNode.setPosition(0, 0, width, height)
 
         recordBackgroundViews()

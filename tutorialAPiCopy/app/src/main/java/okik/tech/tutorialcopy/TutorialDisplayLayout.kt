@@ -4,8 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RenderNode
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
 import android.util.AttributeSet
 import android.util.TypedValue
@@ -47,7 +45,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     fun renderFocusAreaWithDialog(focusArea: FocusArea) {
         this.renderFocusArea(focusArea)
 
-        val dialog = FocusLayout(context)
+        val dialog = BackgroundEffectRendererLayout(context)
 
         dialog.layoutParams = ConstraintLayout.LayoutParams(
             700,
@@ -107,7 +105,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             dialog.setFallbackBackground((context as Activity).window.decorView.background)
         }
 
-        dialog.renderNodeBlurController(
+        dialog.setBackgroundConfigs(
             backgroundSettings,
             if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
         )
@@ -158,7 +156,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
     private fun initComponents(focusArea: FocusArea) {
         // view at index 1
-        val focusSurrounding = FocusLayout(context)
+        val focusSurrounding = BackgroundEffectRendererLayout(context)
         focusSurrounding.id = generateViewId()
 
         val shapeWidth = focusArea.view.width +
@@ -193,7 +191,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             }
         )
 
-        focusSurrounding.renderNodeBlurController(
+        focusSurrounding.setBackgroundConfigs(
             backgroundSettings,
             if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
         )
@@ -287,7 +285,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         // this will be true only if user passed a rounded surrounding object, so we need to
         // render on canvas rounded background and then the view to focus
-        if (child is FocusLayout) {
+        if (child is BackgroundEffectRendererLayout) {
             if (focusArea != null) {
                 if (focusArea!!.surroundingThickness.top > 0
                     || focusArea!!.surroundingThickness.bottom > 0

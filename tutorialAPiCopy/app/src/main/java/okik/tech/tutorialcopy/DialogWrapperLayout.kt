@@ -81,7 +81,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
-        bridgeView.renderNodeBlurController(
+        bridgeView.setBackgroundConfigs(
             backgroundSettings,
             renderNode,
             path

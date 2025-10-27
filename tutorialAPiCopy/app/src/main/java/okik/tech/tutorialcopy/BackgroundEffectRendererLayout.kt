@@ -1,18 +1,17 @@
 package okik.tech.tutorialcopy
 
 import android.content.Context
-import android.graphics.Color
+import android.graphics.Canvas
 import android.graphics.Outline
 import android.graphics.Paint
-import android.graphics.RenderEffect
+import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.InsetDrawable
 import android.graphics.drawable.ShapeDrawable
-import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewOutlineProvider
 import android.widget.FrameLayout
-import androidx.annotation.RequiresApi
 
 /**
  * This component is just a frame layout wrapped in a rounded corner shape, the difference
@@ -22,43 +21,26 @@ import androidx.annotation.RequiresApi
  * a view that lives behind the rest of the content, and is added automatically when view is
  * instantiated, it is referred to as "effectHolderBackground"
  */
-class RoundContainerTwo @JvmOverloads constructor(
+class BackgroundEffectRendererLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs){
     private var paint: Paint = Paint()
-    private var cornerRadius: Float = 0f
+    private var backgroundSettings: BlurBackgroundSettings? = null
 
-    init {
-        val effectHolderBackground = View(context)
-        effectHolderBackground.layoutParams =
-            LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-        effectHolderBackground.visibility = GONE
-
-//        addView(effectHolderBackground)
-
-        setBackgroundColor(Color.TRANSPARENT) // custom viewgroups need this call otherwise they wont be visible
-    }
+    private val blurNode = RenderNode("BlurView node")
+    var backgroundViewRenderNode: RenderNode? = null
+    private var fallBackDrawable: Drawable? = null
 
     /**
      * If no background to the effect holder was set then this won't change the view in any way
      */
-    fun setEffectHolderBackgroundPaint(paint: Paint) {
+    fun clonePaintToBackgroundDrawable(paint: Paint) {
         this.paint.alpha = paint.alpha
         this.paint.style = paint.style
         this.paint.strokeWidth = paint.strokeWidth
         this.paint.isAntiAlias = true
         this.paint.color = paint.color
-    }
-
-    /**
-     * This effect is only applied to "helper" view, which was added automatically
-     * with the purpose of being able to render effects on the background of this custom view
-     * without affecting the foreground views(rest of its children)
-     */
-    @RequiresApi(Build.VERSION_CODES.S)
-    fun setEffectHolderBackgroundEffect(effect: RenderEffect?) {
-//        getChildAt(0).setRenderEffect(effect)
     }
 
     /**
@@ -75,18 +57,13 @@ class RoundContainerTwo @JvmOverloads constructor(
      * to the helper view's background drawable, use "setEffectHolderBackgroundPadding", this is helpful to allow
      * an effect to have the space it needs to render correctly/fully on thew view's canvas
      */
-    fun setEffectHolderBackgroundDrawable(drawable: Drawable) {
-//        getChildAt(0).background = drawable
-//
-//        getChildAt(0).setClipToOutline(true)
-//        getChildAt(0).setOutlineProvider(object : ViewOutlineProvider() {
-//            override fun getOutline(view: View?, outline: Outline) {
-//                getChildAt(0).getBackground().getOutline(outline)
-//                outline.setAlpha(1f)
-//            }
-//        })
+    fun configureDrawableAsBackground(drawable: Drawable) {
         background = drawable
 
+        if (drawable is ShapeDrawable) this.paint = drawable.paint
+    }
+
+    fun clipToBackground() {
         setClipToOutline(true)
         setOutlineProvider(object : ViewOutlineProvider() {
             override fun getOutline(view: View?, outline: Outline) {
@@ -94,8 +71,6 @@ class RoundContainerTwo @JvmOverloads constructor(
                 outline.setAlpha(1f)
             }
         })
-
-        if (drawable is ShapeDrawable) this.paint = drawable.paint
     }
 
     /**
@@ -107,16 +82,90 @@ class RoundContainerTwo @JvmOverloads constructor(
      * for the user if not aware of the behavior of this custom view but it also enables interesting
      * and more flexible UI possibilities
      */
-    fun setEffectHolderBackgroundPadding(padding: Int) {
-//        val backgroundDrawable = getChildAt(0).background
-//
-//        if (backgroundDrawable is InsetDrawable) {
-//            getChildAt(0).background = InsetDrawable(backgroundDrawable.drawable, padding)
-//
-//        } else if (backgroundDrawable != null) {
-//            val drawable = InsetDrawable(backgroundDrawable, padding)
-//
-//            getChildAt(0).background = drawable
-//        }
+    fun setPaddingToBackgroundDrawable(
+        top: Int,
+        bottom: Int,
+        start: Int,
+        end: Int
+    ) {
+        val backgroundDrawable = background
+        background = null
+
+        if (backgroundDrawable is InsetDrawable) {
+            background = InsetDrawable(backgroundDrawable.drawable, start, top, end, bottom)
+
+        } else if (backgroundDrawable != null) {
+            val drawable = InsetDrawable(backgroundDrawable, start, top, end, bottom)
+
+            background = drawable
+        }
+    }
+
+    fun setBackgroundConfigs(
+        backgroundSettings: BlurBackgroundSettings,
+        backgroundViewRenderNode: RenderNode
+    ) {
+        this.backgroundSettings = backgroundSettings
+        this.backgroundViewRenderNode = backgroundViewRenderNode
+        setWillNotDraw(false)
+
+        configureDrawableAsBackground(backgroundSettings.backgroundDrawable)
+
+        setPaddingToBackgroundDrawable(
+            backgroundSettings.padding.top.toInt(),
+            backgroundSettings.padding.bottom.toInt(),
+            backgroundSettings.padding.start.toInt(),
+            backgroundSettings.padding.end.toInt()
+        )
+
+        if (backgroundSettings.shouldClipToBackground) {
+            clipToBackground()
+        }
+
+        clonePaintToBackgroundDrawable(backgroundSettings.backgroundOverlayPaint)
+
+        // if should not clip to background the effect is applied to
+        // the drawing
+        if (!backgroundSettings.shouldClipToBackground) {
+            setRenderEffect(backgroundSettings.renderEffect)
+        }
+    }
+
+    override fun draw(canvas: Canvas) {
+        if (backgroundSettings != null) {
+            drawBackgroundRenderNode(canvas)
+        }
+
+        super.draw(canvas)
+    }
+
+    private fun drawBackgroundRenderNode(canvas: Canvas) {
+        blurNode.setPosition(0, 0, width, height)
+
+        recordBackgroundViews()
+
+        // Draw on the system canvas
+        canvas.drawRenderNode(blurNode)
+    }
+
+    private fun recordBackgroundViews() {
+        val recordingCanvas = blurNode.beginRecording()
+        if (fallBackDrawable != null) {
+            fallBackDrawable!!.draw(recordingCanvas)
+        }
+
+        if (backgroundSettings!!.shouldClipToBackground) {
+            blurNode.setRenderEffect(backgroundSettings!!.renderEffect)
+        }
+
+        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas, this)
+
+        recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
+
+        blurNode.endRecording()
+    }
+
+    fun setFallbackBackground(frameClearDrawable: Drawable?) {
+        this.fallBackDrawable = frameClearDrawable
     }
 }
