@@ -2,6 +2,7 @@ package okik.tech.tutorialcopy
 
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.ShapeDrawable
@@ -66,6 +67,27 @@ class FocusArea private constructor(
         val start: Float,
         val end: Float
     )
+
+    /**
+     * A focus area by default consumes a "BackgroundEffectRenderLayout" for the surrounding area, that view
+     * takes a background settings object and this is just a convenience method to generate them easily. This
+     * enables us to match the properties of the instances of this views used in the surrounding area
+     * and in the dialog background and control the canvas position in each instance as needed
+
+     * @param renderCanvasPositionCommand lets control the location/positon of the recording canvas that
+     * is drawing a "render node", which is passed to the instance of the "BackgroundEffectRenderLayout",
+     * and it also passes and reference the itself in case you need
+     */
+    fun generateBackgroundSettings(renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): BackgroundSettings {
+        return BackgroundSettings(
+            surroundingThicknessEffect,
+            shouldClipToBackground,
+            surroundingAreaBackgroundDrawable,
+            surroundingAreaPaint,
+            surroundingAreaPadding,
+            renderCanvasPositionCommand
+        )
+    }
 
     class Builder {
         private var view: View? = null
