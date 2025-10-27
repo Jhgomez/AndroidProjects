@@ -13,6 +13,7 @@ import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.FrameLayout.LayoutParams
 import androidx.annotation.RequiresApi
+import androidx.core.content.ContextCompat
 
 
 /**
@@ -55,8 +56,7 @@ class FocusArea private constructor(
     val outerAreaEffect: RenderEffect?,
     val overlayColor: Int,
     val overlayAlpha: Short,
-){
-
+) {
     /**
      * All params are in DP and will be converter to PX automatically
      */
@@ -139,15 +139,6 @@ class FocusArea private constructor(
             return this
         }
 
-        // should only be called in the build method
-        private fun dpToPx(dp: Float): Float {
-            return TypedValue.applyDimension(
-                TypedValue.COMPLEX_UNIT_DIP,
-                dp.toFloat(),
-                this.view!!.resources.displayMetrics
-            )
-        }
-
         fun setSurroundingAreaPaint(surroundingAreaPaint: Paint): Builder {
             this.surroundingAreaPaint = surroundingAreaPaint
             return this
@@ -163,6 +154,12 @@ class FocusArea private constructor(
             return this
         }
 
+        /**
+         * Consider creating drawables at runtime, drawables defined in XML could be complex to configure
+         * correctly when used in this library APIs. Drawables created at runtime doesn't have much automatic
+         * configs, making it easy to configure its format with a simple Paint instance. You should
+         * prefer shape drawables as these are the only drawables tested with at the moment
+         */
         fun setSurroundingAreaBackgroundDrawable(surroundingAreaBackgroundDrawable: Drawable): Builder {
             this.surroundingAreaBackgroundDrawable = surroundingAreaBackgroundDrawable
             return this
@@ -228,11 +225,27 @@ class FocusArea private constructor(
                 surroundingThickness = SurroundingThickness(0f, 0f, 0f, 0f)
             } else {
                 surroundingThickness = SurroundingThickness(
-                    dpToPx(surroundingThickness!!.top),
-                    dpToPx(surroundingThickness!!.bottom),
-                    dpToPx(surroundingThickness!!.start),
-                    dpToPx(surroundingThickness!!.end)
+                    dpToPx(surroundingThickness!!.top, this.view!!.context),
+                    dpToPx(surroundingThickness!!.bottom, this.view!!.context),
+                    dpToPx(surroundingThickness!!.start, this.view!!.context),
+                    dpToPx(surroundingThickness!!.end, this.view!!.context)
                 )
+            }
+
+
+            if (surroundingAreaPadding == null) {
+                surroundingAreaPadding = InnerPadding(0f, 0f, 0f, 0f)
+            } else {
+                surroundingAreaPadding = InnerPadding(
+                    dpToPx(surroundingAreaPadding!!.top, this.view!!.context),
+                    dpToPx(surroundingAreaPadding!!.bottom, this.view!!.context),
+                    dpToPx(surroundingAreaPadding!!.start, this.view!!.context),
+                    dpToPx(surroundingAreaPadding!!.end, this.view!!.context)
+                )
+            }
+
+            if (surroundingAreaBackgroundDrawable == null) {
+                surroundingAreaBackgroundDrawable = dispatchDefaultDrawable(this.view!!.context)
             }
 
             if (surroundingAreaPaint == null) {
@@ -243,31 +256,6 @@ class FocusArea private constructor(
                 paint.style = Paint.Style.FILL
 
                 surroundingAreaPaint = paint
-            }
-
-            if (surroundingAreaPadding == null) {
-                surroundingAreaPadding = InnerPadding(0f, 0f, 0f, 0f)
-            } else {
-                surroundingAreaPadding = InnerPadding(
-                    dpToPx(surroundingAreaPadding!!.top),
-                    dpToPx(surroundingAreaPadding!!.bottom),
-                    dpToPx(surroundingAreaPadding!!.start),
-                    dpToPx(surroundingAreaPadding!!.end)
-                )
-            }
-
-            if (surroundingAreaBackgroundDrawable == null) {
-                val n = dpToPx(16f)
-
-                val roundShape = RoundRectShape(
-                    floatArrayOf(n, n, n, n, n, n, n ,n),
-                    null,
-                    null
-                )
-
-                val shapeDrawable = ShapeDrawable(roundShape)
-
-                surroundingAreaBackgroundDrawable = shapeDrawable
             }
 
             return FocusArea(
