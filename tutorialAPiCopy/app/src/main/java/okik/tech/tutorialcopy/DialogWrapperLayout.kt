@@ -30,13 +30,11 @@ class DialogWrapperLayout @JvmOverloads constructor(
     private val path: Path = Path()
 
     init {
-        id = generateViewId()
         setBackgroundColor(Color.TRANSPARENT)
     }
 
-    fun renderRoundedDialog(
+    fun configuredDialog(
         focusArea: FocusArea,
-        backgroundSettings: BlurBackgroundSettings,
         renderNode: RenderNode,
         dialogGravity: Int,
         dialogXOffsetDp: Float,
@@ -46,10 +44,12 @@ class DialogWrapperLayout @JvmOverloads constructor(
         shouldCenterOnMainAxis: Boolean,
         dialog: View
     ) {
-        val bridgeView = BridgeView(context)
+        val bridgeView = BackgroundBehindPathView(context)
         bridgeView.id = generateViewId()
 
         if (isEmpty()) {
+            if (id == -1) id = generateViewId()
+
             addReferenceView()
 
             // add dialog
@@ -82,9 +82,13 @@ class DialogWrapperLayout @JvmOverloads constructor(
         bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
 
         bridgeView.setBackgroundConfigs(
-            backgroundSettings,
             renderNode,
-            path
+            path,
+            focusArea.surroundingAreaPaint,
+            true,
+            focusArea.shouldClipToBackground,
+            focusArea.surroundingThicknessEffect,
+            { _, _ -> }
         )
 
         if (context is Activity) {
@@ -189,8 +193,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.lineTo(secondVertexX, secondVertexY)
                         path.close()
 
-                        visibility = VISIBLE
-
                         dialogCs.applyTo(this)
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
@@ -214,8 +216,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     }
                 } else {
                     val startX = fa.viewLocation[0] + viewWidth + fa.surroundingThickness.end
@@ -247,8 +247,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
@@ -265,8 +263,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     }
                 }
             }
@@ -305,8 +301,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
@@ -323,8 +317,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     }
                 } else {
                     val startX = fa.viewLocation[0] + viewWidth * originOffsetPercent
@@ -357,8 +349,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     } else {
                         dialogCs.connect(dialog.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
                         dialogCs.connect(dialog.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
@@ -375,8 +365,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         path.close()
 
                         dialogCs.applyTo(this)
-
-                        visibility = VISIBLE
                     }
                 }
             }
