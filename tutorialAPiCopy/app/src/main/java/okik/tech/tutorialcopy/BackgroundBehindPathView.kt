@@ -10,19 +10,15 @@ import android.util.AttributeSet
 import android.view.View
 
 /**
- * This component is just a frame layout wrapped in a rounded corner shape, the difference
- * with a material card is that this one doesn't have "card elevation" and also you can apply
- * effects to its background without affecting the foreground(its content). The background, which
- * enables to render effects, exclusively, without affecting the content of the container, is actually
- * a view that lives behind the rest of the content, and is added automatically when view is
- * instantiated, it is referred to as "effectHolderBackground"
+ * This component draws a render node and draws a path on top of it
  */
-class BridgeView @JvmOverloads constructor(
+class BackgroundInPathView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : View(context, attrs){
     private var paint: Paint = Paint()
-    private var backgroundSettings: BlurBackgroundSettings? = null
+    private var backgroundSettings: BackgroundSettings? = null
+    private var shouldClipPath: Boolean = true
 
     private val blurNode = RenderNode("UnderlyingView")
     var backgroundViewRenderNode: RenderNode? = null
@@ -38,13 +34,15 @@ class BridgeView @JvmOverloads constructor(
     }
 
     fun setBackgroundConfigs(
-        backgroundSettings: BlurBackgroundSettings,
+        backgroundSettings: BackgroundSettings,
         backgroundViewRenderNode: RenderNode,
-        path: Path
+        path: Path,
+        shouldClipPath: Boolean
     ) {
         this.backgroundSettings = backgroundSettings
         this.backgroundViewRenderNode = backgroundViewRenderNode
         this.path = path
+        this.shouldClipPath = shouldClipPath
         setWillNotDraw(false)
 
         this.paint = backgroundSettings.backgroundOverlayPaint
@@ -57,15 +55,13 @@ class BridgeView @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-        if (path != null) {
-            canvas.clipPath(path!!)
-        }
+        if (path != null && backgroundSettings != null) {
+            if (shouldClipPath) {
+                canvas.clipPath(path!!)
+            }
 
-        if (backgroundSettings != null) {
             drawBackgroundRenderNode(canvas)
-        }
 
-        if (path != null) {
             canvas.drawPath(path!!, paint)
         }
 
@@ -83,6 +79,7 @@ class BridgeView @JvmOverloads constructor(
 
     private fun recordBackgroundViews() {
         val recordingCanvas = blurNode.beginRecording()
+
         if (fallBackDrawable != null) {
             fallBackDrawable!!.draw(recordingCanvas)
         }
