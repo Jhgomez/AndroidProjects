@@ -13,6 +13,7 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import androidx.annotation.RequiresApi
@@ -49,7 +50,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         val dialog = FocusLayout(context)
 
         dialog.layoutParams = ConstraintLayout.LayoutParams(
-            900,
+            700,
             530
         )
 
@@ -67,7 +68,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             resources.displayMetrics
         )
 
-        content.root.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, 530)
+        content.root.layoutParams = LayoutParams(700, 530)
 
         (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
 
@@ -86,9 +87,18 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             focusArea.surroundingAreaBackgroundDrawable,
             focusArea.surroundingAreaPaint,
             focusArea.surroundingAreaPadding,
-            { recordingCanvas ->
+            { recordingCanvas, focusView ->
                 val pos = IntArray(2)
-                dialog.getLocationOnScreen(pos)
+                focusView.getLocationOnScreen(pos)
+
+                if (focusView.context is Activity) {
+                    var topBarHeight = (focusView.context as Activity).window.decorView.rootWindowInsets?.getInsetsIgnoringVisibility(
+                        WindowInsets.Type.statusBars()
+                    )?.top ?: 0
+
+                    pos[1] = pos[1] - topBarHeight
+                }
+
                 recordingCanvas.translate(-pos[0].toFloat(), -pos[1].toFloat())
             }
         )
@@ -110,9 +120,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             focusArea.surroundingAreaBackgroundDrawable,
             focusArea.surroundingAreaPaint,
             focusArea.surroundingAreaPadding,
-            { recordingCanvas ->
-
-            }
+            { _, _ -> }
         )
 
         dialogWrapperLayout.renderRoundedDialog(
@@ -120,8 +128,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             wrapperBackgroundSettings,
             if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect,
             Gravity.BOTTOM,
-            0f,
-            300f,
+            -100f,
+            350f,
             .5f,
             .5f,
             false,
@@ -144,12 +152,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             for (i in 1 .. childCount -1) {
                 getChildAt(i).visibility = GONE
             }
-
-//            invalidate()
-//            binding.viewOverlay?.visibility = View.INVISIBLE
-//            binding.root.setRenderEffect(null)
-//            requireActivity().window.decorView.setRenderEffect(null)
-
         }
     }
 
@@ -183,7 +185,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             focusArea.surroundingAreaBackgroundDrawable,
             focusArea.surroundingAreaPaint,
             focusArea.surroundingAreaPadding,
-            { recordingCanvas ->
+            { recordingCanvas, _ ->
                 recordingCanvas.translate(
                     -focusArea.viewLocation[0].toFloat() + focusArea.surroundingThickness.start,
                     -focusArea.viewLocation[1].toFloat() + focusArea.surroundingThickness.top,
