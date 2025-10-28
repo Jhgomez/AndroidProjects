@@ -35,11 +35,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
         setBackgroundColor(Color.TRANSPARENT)
     }
 
-    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
-        return super.drawChild(canvas, child, drawingTime)
-    }
-
-    fun configuredDialog(fd: FocusDialog, renderNode: RenderNode) {
+    fun configuredDialog(fd: FocusDialog, renderNode: RenderNode?) {
         val bridgeView = RenderNodeBehindPathView(context)
         bridgeView.id = generateViewId()
 
