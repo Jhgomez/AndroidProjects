@@ -5,16 +5,10 @@ import android.graphics.Paint
 import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.RoundRectShape
 import android.os.Build
-import android.util.TypedValue
 import android.view.View
 import android.view.WindowInsets
-import android.widget.FrameLayout
-import android.widget.FrameLayout.LayoutParams
 import androidx.annotation.RequiresApi
-import androidx.core.content.ContextCompat
 
 
 /**
@@ -52,7 +46,7 @@ class FocusArea private constructor(
     val surroundingThicknessEffect: RenderEffect?,
     val surroundingAreaPaint: Paint,
     val surroundingAreaPadding: InnerPadding,
-    val surroundingAreaBackgroundDrawable: Drawable,
+    val surroundingAreaBackgroundDrawableFactory: () -> Drawable,
     val shouldClipToBackground: Boolean,
     val outerAreaEffect: RenderEffect?,
     val overlayColor: Int,
@@ -82,11 +76,45 @@ class FocusArea private constructor(
         return BackgroundSettings(
             surroundingThicknessEffect,
             shouldClipToBackground,
-            surroundingAreaBackgroundDrawable,
+            surroundingAreaBackgroundDrawableFactory.invoke(),
             surroundingAreaPaint,
             surroundingAreaPadding,
             renderCanvasPositionCommand
         )
+    }
+
+    fun generateMatchingFocusDialog(
+        gravity: Int,
+        dialogXMarginDp: Short,
+        dialogYMarginDp: Short,
+        originOffsetPercent: Double,
+        destinationOffsetPercent: Double,
+        shouldCenterOnMainAxis: Boolean,
+        dialog: View
+    ): FocusDialog{
+        val refWidth = view.width + surroundingThickness.start + surroundingThickness.end
+        val refHeight = view.height + surroundingThickness.top + surroundingThickness.bottom
+
+        val x = viewLocation[0] - surroundingThickness.start
+        val y = viewLocation[1] - surroundingThickness.top
+
+        val location = intArrayOf(x.toInt(), y.toInt())
+
+        return FocusDialog
+            .Builder()
+            .setDialogBackgroundPaint(surroundingAreaPaint)
+            .setReferenceViewLocation(location)
+            .setReferenceViewSize(refWidth.toInt(), refHeight.toInt())
+            .setShouldClipToBackground(shouldClipToBackground)
+            .setBackgroundRenderEffect(surroundingThicknessEffect)
+            .setGravity(gravity)
+            .setDialogXMarginDp(dialogXMarginDp)
+            .setDialogYMarginDp(dialogYMarginDp)
+            .setOriginOffsetPercent(originOffsetPercent)
+            .setDestinationOffsetPercent(destinationOffsetPercent)
+            .setShouldCenterOnMainAxis(shouldCenterOnMainAxis)
+            .setView(dialog)
+            .build()
     }
 
     class Builder {
@@ -94,7 +122,7 @@ class FocusArea private constructor(
         private var viewLocation: IntArray? = null
         private var surroundingThicknessEffect: RenderEffect? = null
         private var surroundingAreaPaint: Paint? = null
-        private var surroundingAreaBackgroundDrawable: Drawable? = null
+        private var surroundingAreaBackgroundDrawableFactory: (() -> Drawable)? = null
         private var shouldClipToBackground: Boolean = true
         private var outerAreaEffect: RenderEffect? = null
         private var overlayColor: Int = Color.TRANSPARENT
@@ -194,8 +222,8 @@ class FocusArea private constructor(
          * configs, making it easy to configure its format with a simple Paint instance. You should
          * prefer shape drawables as these are the only drawables tested with at the moment
          */
-        fun setSurroundingAreaBackgroundDrawable(surroundingAreaBackgroundDrawable: Drawable): Builder {
-            this.surroundingAreaBackgroundDrawable = surroundingAreaBackgroundDrawable
+        fun setSurroundingAreaBackgroundDrawableFactory(surroundingAreaBackgroundDrawableFactory: () -> Drawable): Builder {
+            this.surroundingAreaBackgroundDrawableFactory = surroundingAreaBackgroundDrawableFactory
             return this
         }
 
@@ -270,8 +298,9 @@ class FocusArea private constructor(
                 dpToPx(padEnd, this.view!!.context)
             )
 
-            if (surroundingAreaBackgroundDrawable == null) {
-                surroundingAreaBackgroundDrawable = dispatchDefaultDrawable(this.view!!.context)
+            if (surroundingAreaBackgroundDrawableFactory == null) {
+                surroundingAreaBackgroundDrawableFactory =
+                    { dispatchDefaultDrawable(this.view!!.context) }
             }
 
             if (surroundingAreaPaint == null) {
@@ -291,7 +320,7 @@ class FocusArea private constructor(
                 surroundingThicknessEffect,
                 surroundingAreaPaint!!,
                 surroundingAreaPadding,
-                surroundingAreaBackgroundDrawable!!,
+                surroundingAreaBackgroundDrawableFactory!!,
                 shouldClipToBackground,
                 outerAreaEffect,
                 overlayColor,

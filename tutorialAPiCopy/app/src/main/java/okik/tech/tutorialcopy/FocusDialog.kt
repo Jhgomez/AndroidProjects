@@ -24,20 +24,20 @@ class FocusDialog private constructor(
     val backgroundRenderEffect: RenderEffect?
 ){
     class Builder {
-        var dialogBackgroundPaint: Paint? = null
-        var referenceView: View? = null
-        var referenceViewWidth: Int? = null
-        var referenceViewHeight: Int? = null
-        var referenceViewLocation: IntArray? = null
-        var shouldClipToBackground: Boolean = true
-        var gravity: Int = Gravity.BOTTOM
-        var dialogXMarginDp: Short = 0
-        var dialogYMarginDp: Short = 0
-        var originOffsetPercent: Double = 0.5
-        var destinationOffsetPercent: Double = 0.5
-        var shouldCenterOnMainAxis: Boolean = false
-        var view: View? = null
-        var backgroundRenderEffect: RenderEffect? = null
+        private var dialogBackgroundPaint: Paint? = null
+        private var referenceView: View? = null
+        private var referenceViewWidth: Int? = null
+        private var referenceViewHeight: Int? = null
+        private var referenceViewLocation: IntArray? = null
+        private var shouldClipToBackground: Boolean = true
+        private var gravity: Int = Gravity.BOTTOM
+        private var dialogXMarginDp: Short = 0
+        private var dialogYMarginDp: Short = 0
+        private var originOffsetPercent: Double = 0.5
+        private var destinationOffsetPercent: Double = 0.5
+        private var shouldCenterOnMainAxis: Boolean = false
+        private var view: View? = null
+        private var backgroundRenderEffect: RenderEffect? = null
 
         fun setDialogBackgroundPaint(dialogBackgroundPaint: Paint): Builder{
             this.dialogBackgroundPaint = dialogBackgroundPaint
@@ -45,6 +45,12 @@ class FocusDialog private constructor(
         }
         fun setReferenceViewLocation(referenceViewLocation: IntArray): Builder{
             this.referenceViewLocation = referenceViewLocation
+            return this
+        }
+        fun setReferenceViewSize(width: Int, height: Int): Builder {
+            this.referenceViewWidth = width
+            this.referenceViewHeight = height
+
             return this
         }
         fun setShouldClipToBackground(shouldClipToBackground: Boolean): Builder{
@@ -81,12 +87,17 @@ class FocusDialog private constructor(
             return this
         }
 
+        /**
+         * This is just a convenience method as it helps to automatically set location, width and height
+         * properties, however if location, width and height values are explicitly set they those
+         * values will have precedence and the value inferred from this parameter will be ignored
+         */
         fun setReferenceView(view: View): Builder {
             this.referenceView = view
             return this
         }
 
-        fun setBackgroundRenderEffect(backgroundRenderEffect: RenderEffect): Builder  {
+        fun setBackgroundRenderEffect(backgroundRenderEffect: RenderEffect?): Builder  {
             this.backgroundRenderEffect = backgroundRenderEffect
             return this
         }
@@ -110,10 +121,14 @@ class FocusDialog private constructor(
                     this.referenceView!!.getLocationInWindow(this.referenceViewLocation)
                 }
 
-                this.referenceViewWidth = referenceView!!.width
-                this.referenceViewHeight = referenceView!!.height
-            } else {
-                throw IllegalStateException("You have to pass a reference to the view to attach the dialog to")
+                if (referenceViewWidth == null && referenceViewHeight == null) {
+                    this.referenceViewWidth = referenceView!!.width
+                    this.referenceViewHeight = referenceView!!.height
+                }
+            }
+
+            if (referenceViewLocation == null || referenceViewWidth == null || referenceViewHeight == null ) {
+                throw IllegalStateException("You have to pass either a view reference or a view location and view width and height explicitly")
             }
 
             return FocusDialog(
@@ -123,8 +138,8 @@ class FocusDialog private constructor(
                 referenceViewHeight!!,
                 shouldClipToBackground,
                 gravity,
-                dpToPx(dialogXMarginDp, this.referenceView!!.context),
-                dpToPx(dialogYMarginDp, this.referenceView!!.context),
+                dpToPx(dialogXMarginDp, this.view!!.context),
+                dpToPx(dialogYMarginDp, this.view!!.context),
                 originOffsetPercent,
                 destinationOffsetPercent,
                 shouldCenterOnMainAxis,

@@ -19,7 +19,7 @@ fun dpToPx(dp: Short, context: Context): Float {
  * hard to configure
  */
 fun dispatchDefaultDrawable(context: Context): ShapeDrawable {
-    val n = dpToPx(16f, context)
+    val n = dpToPx(16, context)
 
     val roundShape = RoundRectShape(
         floatArrayOf(n, n, n, n, n, n, n ,n),
