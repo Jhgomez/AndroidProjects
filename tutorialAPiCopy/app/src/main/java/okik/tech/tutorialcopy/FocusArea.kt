@@ -5,11 +5,7 @@ import android.graphics.Paint
 import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.view.View
-import android.view.WindowInsets
-import androidx.annotation.RequiresApi
-import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 
 
@@ -84,15 +80,7 @@ class FocusArea private constructor(
         )
     }
 
-    fun generateMatchingFocusDialog(
-        gravity: Int,
-        dialogXMarginDp: Short,
-        dialogYMarginDp: Short,
-        originOffsetPercent: Double,
-        destinationOffsetPercent: Double,
-        shouldCenterOnMainAxis: Boolean,
-        dialog: View
-    ): FocusDialog{
+    fun generateMatchingFocusDialog(): FocusDialog.Builder {
         val refWidth = view.width + surroundingThickness.start + surroundingThickness.end
         val refHeight = view.height + surroundingThickness.top + surroundingThickness.bottom
 
@@ -103,19 +91,11 @@ class FocusArea private constructor(
 
         return FocusDialog
             .Builder()
-            .setDialogBackgroundPaint(surroundingAreaPaint)
+            .setOriginBackgroundPaint(surroundingAreaPaint)
             .setReferenceViewLocation(location)
             .setReferenceViewSize(refWidth.toInt(), refHeight.toInt())
             .setShouldClipToBackground(shouldClipToBackground)
             .setBackgroundRenderEffect(surroundingThicknessEffect)
-            .setGravity(gravity)
-            .setDialogXMarginDp(dialogXMarginDp)
-            .setDialogYMarginDp(dialogYMarginDp)
-            .setOriginOffsetPercent(originOffsetPercent)
-            .setDestinationOffsetPercent(destinationOffsetPercent)
-            .setShouldCenterOnMainAxis(shouldCenterOnMainAxis)
-            .setView(dialog)
-            .build()
     }
 
     class Builder {
@@ -284,7 +264,7 @@ class FocusArea private constructor(
                         WindowInsetsCompat.Type.statusBars()
                     ).top
 
-                    viewLocation!![1] = viewLocation!![1] - topBarHeight
+                    viewLocation!![1] -= topBarHeight
                 }
             } else if (viewLocation!!.size != 2) {
                 throw IllegalStateException("Location can only contain two values, x and y")
