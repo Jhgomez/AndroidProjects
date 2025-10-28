@@ -23,16 +23,27 @@ import okik.tech.tutorialcopy.databinding.DialogContentBinding
  * This custom layout is expected to only have one child, which is usually a Linear or Constraint
  * Layout or similar.
  */
-@RequiresApi(Build.VERSION_CODES.S)
 class TutorialDisplayLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs) {
     var focusArea: FocusArea? = null
 
-    private val contentCopy = RenderNode("ContentCopy")
-    private val contentWithEffect = RenderNode("BlurredContent")
-    private val focusedContent = RenderNode("FocusContent")
+    private val contentCopy: RenderNode?
+    private val contentWithEffect: RenderNode?
+    private val focusedContent: RenderNode?
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            contentCopy = RenderNode("ContentCopy")
+            contentWithEffect = RenderNode("BlurredContent")
+            focusedContent = RenderNode("FocusContent")
+        } else {
+            contentCopy = null
+            contentWithEffect = null
+            focusedContent = null
+        }
+    }
 
     fun renderFocusArea(focusArea: FocusArea) {
         if (this.focusArea == null) {
@@ -144,20 +155,24 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
         // child at 0 should always be the only child added, by the user, to this custom view
         if (getChildAt(0).id == child?.id) {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                return super.drawChild(canvas, child, drawingTime)
+            }
+
             focusArea?.also { fa ->
                 // this custom layout should only have one child and we record its content with no effect here
                 // so we can make a copy of the area we want to focus on
-                contentCopy.setPosition(0, 0, width, height)
+                contentCopy!!.setPosition(0, 0, width, height)
 
-                val contentCopyRecordingCanvas = contentCopy.beginRecording()
+                val contentCopyRecordingCanvas = contentCopy!!.beginRecording()
 
                 val isInvalidatedIssued =
                     super.drawChild(contentCopyRecordingCanvas, child, drawingTime)
-                contentCopy.endRecording()
+                contentCopy!!.endRecording()
 
                 // create a version of the original view that lives in "contentCopy" and apply the
                 // passed effect
-                contentWithEffect.setRenderEffect(fa.outerAreaEffect)
+                contentWithEffect!!.setRenderEffect(fa.outerAreaEffect)
 
                 contentWithEffect.setPosition(0, 0, width, height)
                 val contentWithEffectRecordingCanvas = contentWithEffect.beginRecording()
@@ -193,7 +208,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
 //                    }
 
-                    focusedContent.setPosition(0, 0, focusWidth, focusHeight)
+                    focusedContent!!.setPosition(0, 0, focusWidth, focusHeight)
 
                     focusedContent.translationX = translationX
                     focusedContent.translationY = translationY
@@ -224,20 +239,44 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         // this will be true only if user passed a rounded surrounding object, so we need to
         // render on canvas rounded background and then the view to focus
         if (child is BackgroundEffectRendererLayout) {
-            if (focusArea != null) {
-                if (focusArea!!.surroundingThickness.top > 0
-                    || focusArea!!.surroundingThickness.bottom > 0
-                    || focusArea!!.surroundingThickness.start > 0
-                    || focusArea!!.surroundingThickness.end > 0
-                ) {
-                    val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                if (focusArea != null) {
+                    if (focusArea!!.surroundingThickness.top > 0
+                        || focusArea!!.surroundingThickness.bottom > 0
+                        || focusArea!!.surroundingThickness.start > 0
+                        || focusArea!!.surroundingThickness.end > 0
+                    ) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
-                    canvas.drawRenderNode(focusedContent)
+                        canvas.translate(
+                            focusArea!!.viewLocation[0].toFloat(),
+                            focusArea!!.viewLocation[1].toFloat()
+                        )
+                        focusArea!!.view.draw(canvas)
 
-                    return isInvalidateIssued
-                } else {
-                    canvas.drawRenderNode(focusedContent)
-                    return false
+                        return isInvalidateIssued
+                    } else {
+                        focusArea!!.view.draw(canvas)
+                        return false
+                    }
+                }
+
+            } else {
+                if (focusArea != null) {
+                    if (focusArea!!.surroundingThickness.top > 0
+                        || focusArea!!.surroundingThickness.bottom > 0
+                        || focusArea!!.surroundingThickness.start > 0
+                        || focusArea!!.surroundingThickness.end > 0
+                    ) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+
+                        canvas.drawRenderNode(focusedContent!!)
+
+                        return isInvalidateIssued
+                    } else {
+                        canvas.drawRenderNode(focusedContent!!)
+                        return false
+                    }
                 }
             }
         }
