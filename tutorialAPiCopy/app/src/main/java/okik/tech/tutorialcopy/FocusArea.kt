@@ -9,6 +9,8 @@ import android.os.Build
 import android.view.View
 import android.view.WindowInsets
 import androidx.annotation.RequiresApi
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 
 
 /**
@@ -38,7 +40,6 @@ import androidx.annotation.RequiresApi
  * will be painted using this paint object
  */
 
-@RequiresApi(Build.VERSION_CODES.S)
 class FocusArea private constructor(
     val view: View,
     val viewLocation: IntArray,
@@ -272,13 +273,19 @@ class FocusArea private constructor(
 
                 view!!.getLocationOnScreen(viewLocation)
 
-                var topBarHeight: Int
+                val insets = WindowInsetsCompat.toWindowInsetsCompat(view!!.rootWindowInsets)
 
-                topBarHeight = view!!.rootWindowInsets?.getInsetsIgnoringVisibility(
-                    WindowInsets.Type.statusBars()
-                )?.top ?: 0
+//                topBarHeight = view!!.rootWindowInsets?.getInsetsIgnoringVisibility(
+//                    WindowInsets.Type.statusBars()
+//                )?.top ?: 0
+                if (insets != null) {
+                    val topBarHeight = insets.getInsetsIgnoringVisibility(
+                //                        WindowInsets.Type.statusBars()
+                        WindowInsetsCompat.Type.statusBars()
+                    ).top
 
-                viewLocation!![1] = viewLocation!![1] - topBarHeight
+                    viewLocation!![1] = viewLocation!![1] - topBarHeight
+                }
             } else if (viewLocation!!.size != 2) {
                 throw IllegalStateException("Location can only contain two values, x and y")
             }
