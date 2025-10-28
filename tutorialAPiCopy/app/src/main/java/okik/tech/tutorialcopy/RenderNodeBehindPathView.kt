@@ -8,6 +8,7 @@ import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 
@@ -25,11 +26,19 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     private var setEffectOnBackgroundOnly = true
     private var shouldClipPath: Boolean = true
 
-    private val blurNode = RenderNode("UnderlyingView")
+    private val blurNode: RenderNode?
     var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
 
     private var path: Path? = null
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            blurNode = RenderNode("UnderlyingView")
+        } else {
+            blurNode = null
+        }
+    }
 
     /**
      * If no background to the effect holder was set then this won't change the view in any way
@@ -39,7 +48,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     }
 
     fun setBackgroundConfigs(
-        backgroundViewRenderNode: RenderNode,
+        backgroundViewRenderNode: RenderNode?,
         path: Path,
         pathPaint: Paint,
         shouldClipPath: Boolean,
@@ -61,7 +70,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
 //        if (!backgroundSettings.shouldClipToBackground) {
 //            setRenderEffect(backgroundSettings.renderEffect)
 //        }
-        if (!setEffectOnBackgroundOnly) {
+        if (!setEffectOnBackgroundOnly && backgroundViewRenderNode != null) {
             setRenderEffect(renderEffect)
         }
     }
@@ -72,7 +81,9 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
                 canvas.clipPath(path!!)
             }
 
-            drawBackgroundRenderNode(canvas)
+            if (blurNode != null) {
+                drawBackgroundRenderNode(canvas)
+            }
 
             canvas.drawPath(path!!, paint)
         }
@@ -81,7 +92,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     }
 
     private fun drawBackgroundRenderNode(canvas: Canvas) {
-        blurNode.setPosition(0, 0, width, height)
+        blurNode!!.setPosition(0, 0, width, height)
 
         recordBackgroundViews()
 
@@ -90,7 +101,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     }
 
     private fun recordBackgroundViews() {
-        val recordingCanvas = blurNode.beginRecording()
+        val recordingCanvas = blurNode!!.beginRecording()
 
         if (fallBackDrawable != null) {
             fallBackDrawable!!.draw(recordingCanvas)
