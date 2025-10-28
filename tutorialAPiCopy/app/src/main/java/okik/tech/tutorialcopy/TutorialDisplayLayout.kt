@@ -6,18 +6,13 @@ import android.graphics.Canvas
 import android.graphics.RenderNode
 import android.os.Build
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.Gravity
-import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.PopupWindow
-import androidx.annotation.RequiresApi
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.graphics.ColorUtils
-import okik.tech.tutorialcopy.databinding.DialogContentBinding
 
 /**
  * This custom layout is expected to only have one child, which is usually a Linear or Constraint
@@ -55,30 +50,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
     fun renderFocusAreaWithDialog(focusArea: FocusArea, focusDialog: FocusDialog) {
         this.renderFocusArea(focusArea)
-
-        val backgroundSettings = focusArea.generateBackgroundSettings(
-            { recordingCanvas, focusView ->
-                val pos = IntArray(2)
-                focusView.getLocationOnScreen(pos)
-
-                if (focusView.context is Activity) {
-                    var topBarHeight = (focusView.context as Activity).window.decorView.rootWindowInsets?.getInsetsIgnoringVisibility(
-                        WindowInsets.Type.statusBars()
-                    )?.top ?: 0
-
-                    pos[1] = pos[1] - topBarHeight
-                }
-
-                recordingCanvas.translate(-pos[0].toFloat(), -pos[1].toFloat())
-            }
-        )
-
-        if (context is Activity && focusDialog.view is BackgroundEffectRendererLayout) {
-            focusDialog.view.setBackgroundConfigs(
-                    backgroundSettings,
-                    if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
-                )
-        }
 
         val dialogWrapperLayout = DialogWrapperLayout(context)
 
@@ -164,11 +135,11 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                 // so we can make a copy of the area we want to focus on
                 contentCopy!!.setPosition(0, 0, width, height)
 
-                val contentCopyRecordingCanvas = contentCopy!!.beginRecording()
+                val contentCopyRecordingCanvas = contentCopy.beginRecording()
 
                 val isInvalidatedIssued =
                     super.drawChild(contentCopyRecordingCanvas, child, drawingTime)
-                contentCopy!!.endRecording()
+                contentCopy.endRecording()
 
                 // create a version of the original view that lives in "contentCopy" and apply the
                 // passed effect
@@ -239,35 +210,31 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         // this will be true only if user passed a rounded surrounding object, so we need to
         // render on canvas rounded background and then the view to focus
         if (child is BackgroundEffectRendererLayout) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                if (focusArea != null) {
-                    if (focusArea!!.surroundingThickness.top > 0
+            if (focusArea != null) {
+                val hasSurrounding = focusArea!!.surroundingThickness.top > 0
                         || focusArea!!.surroundingThickness.bottom > 0
                         || focusArea!!.surroundingThickness.start > 0
                         || focusArea!!.surroundingThickness.end > 0
-                    ) {
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    if (hasSurrounding) {
                         val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
                         canvas.translate(
                             focusArea!!.viewLocation[0].toFloat(),
                             focusArea!!.viewLocation[1].toFloat()
                         )
+
                         focusArea!!.view.draw(canvas)
 
                         return isInvalidateIssued
                     } else {
                         focusArea!!.view.draw(canvas)
+
                         return false
                     }
-                }
-
-            } else {
-                if (focusArea != null) {
-                    if (focusArea!!.surroundingThickness.top > 0
-                        || focusArea!!.surroundingThickness.bottom > 0
-                        || focusArea!!.surroundingThickness.start > 0
-                        || focusArea!!.surroundingThickness.end > 0
-                    ) {
+                } else {
+                    if (hasSurrounding) {
                         val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
                         canvas.drawRenderNode(focusedContent!!)
@@ -275,6 +242,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                         return isInvalidateIssued
                     } else {
                         canvas.drawRenderNode(focusedContent!!)
+
                         return false
                     }
                 }
