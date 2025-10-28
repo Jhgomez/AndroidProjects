@@ -1,27 +1,27 @@
 package okik.tech.tutorialcopy
 
-import android.app.Dialog
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.view.Gravity
 import android.view.View
-import kotlin.contracts.Effect
 
 class FocusDialog private constructor(
-    val dialogBackgroundPaint: Paint,
+    val originBackgroundPaint: Paint,
     val referenceViewLocation: IntArray,
     val referenceViewWidth: Int,
     val referenceViewHeight: Int,
     val shouldClipToBackground: Boolean,
-    val gravity: Int,
+    val dialogGravity: Int,
     val dialogXMarginDp: Float,
     val dialogYMarginDp: Float,
     val originOffsetPercent: Double,
     val destinationOffsetPercent: Double,
-    val shouldCenterOnMainAxis: Boolean,
-    val view: View,
-    val backgroundRenderEffect: RenderEffect?
+    val centerDialogOnMainAxis: Boolean,
+    val dialogView: View,
+    val backgroundRenderEffect: RenderEffect?,
+    val originRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit
 ){
     class Builder {
         private var dialogBackgroundPaint: Paint? = null
@@ -35,11 +35,17 @@ class FocusDialog private constructor(
         private var dialogYMarginDp: Short = 0
         private var originOffsetPercent: Double = 0.5
         private var destinationOffsetPercent: Double = 0.5
-        private var shouldCenterOnMainAxis: Boolean = false
+        private var centerDialogOnMainAxis: Boolean = false
         private var view: View? = null
         private var backgroundRenderEffect: RenderEffect? = null
+        private var originRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _,_ -> }
 
-        fun setDialogBackgroundPaint(dialogBackgroundPaint: Paint): Builder{
+        fun setOriginRenderCanvasPositionCommand(renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): Builder {
+            this.originRenderCanvasPositionCommand = renderCanvasPositionCommand
+            return this
+        }
+
+        fun setOriginBackgroundPaint(dialogBackgroundPaint: Paint): Builder{
             this.dialogBackgroundPaint = dialogBackgroundPaint
             return this
         }
@@ -57,7 +63,7 @@ class FocusDialog private constructor(
             this.shouldClipToBackground = shouldClipToBackground
             return this
         }
-        fun setGravity(gravity: Int): Builder{
+        fun setDialogGravity(gravity: Int): Builder{
             this.gravity = gravity
             return this
         }
@@ -77,12 +83,12 @@ class FocusDialog private constructor(
             this.destinationOffsetPercent = destinationOffsetPercent
             return this
         }
-        fun setShouldCenterOnMainAxis(shouldCenterOnMainAxis: Boolean): Builder{
-            this.shouldCenterOnMainAxis  = shouldCenterOnMainAxis
+        fun setCenterDialogOnMainAxis(centerDialogOnMainAxis: Boolean): Builder{
+            this.centerDialogOnMainAxis  = centerDialogOnMainAxis
             return this
         }
 
-        fun setView(view: View): Builder {
+        fun setDialogView(view: View): Builder {
             this.view = view
             return this
         }
@@ -142,9 +148,10 @@ class FocusDialog private constructor(
                 dpToPx(dialogYMarginDp, this.view!!.context),
                 originOffsetPercent,
                 destinationOffsetPercent,
-                shouldCenterOnMainAxis,
+                centerDialogOnMainAxis,
                 view!!,
-                backgroundRenderEffect
+                backgroundRenderEffect,
+                originRenderCanvasPositionCommand
             )
         }
     }
