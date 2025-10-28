@@ -2,7 +2,6 @@ package okik.tech.tutorialcopy
 
 import android.app.Activity
 import android.content.Context
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Path
 import android.graphics.RenderNode
@@ -36,18 +35,25 @@ class DialogWrapperLayout @JvmOverloads constructor(
     }
 
     fun configuredDialog(fd: FocusDialog, renderNode: RenderNode?) {
+        if (context is Activity && fd.dialogView is BackgroundEffectRendererLayout) {
+            fd.dialogView.setBackgroundRenderNode(renderNode)
+
+            val act = getContext() as Activity
+            fd.dialogView.setFallbackBackground(act.window.decorView.background)
+        }
+
         val bridgeView = RenderNodeBehindPathView(context)
         bridgeView.id = generateViewId()
 
         if (isEmpty()) {
-            if (id == -1) id = generateViewId()
+            if (id == NO_ID) id = generateViewId()
 
             addReferenceView()
 
-            if (fd.view.id == -1) fd.view.id = generateViewId()
+            if (fd.dialogView.id == NO_ID) fd.dialogView.id = generateViewId()
 
-            addView(fd.view)
             addView(bridgeView)
+            addView(fd.dialogView)
         }
 
         cloneViewLocationAndSize(fd)
@@ -65,11 +71,11 @@ class DialogWrapperLayout @JvmOverloads constructor(
         bridgeView.setBackgroundConfigs(
             renderNode,
             path,
-            fd.dialogBackgroundPaint,
+            fd.originBackgroundPaint,
             true,
-            fd.shouldClipToBackground,
+            true,
             fd.backgroundRenderEffect,
-            { _, _ -> }
+            fd.originRenderCanvasPositionCommand
         )
 
         if (context is Activity) {
@@ -122,31 +128,31 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         val referenceView = getChildAt(0)
 
-        when (fa.gravity) {
+        when (fa.dialogGravity) {
             Gravity.START, Gravity.END -> {
                 val xMargin = dialogXOffsetPx
                 val yMargin = fa.referenceViewLocation[1] + dialogYOffsetPx
 
-                if (fa.gravity == Gravity.START) {
+                if (fa.dialogGravity == Gravity.START) {
                     val startX = fa.referenceViewLocation[0]
                     val startY = fa.referenceViewLocation[1] + viewHeight * fa.originOffsetPercent
 //
                     path.moveTo(startX.toFloat(), startY.toFloat())
 //
-                    if (fa.shouldCenterOnMainAxis) {
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setHorizontalBias(fa.view.id, 1f)
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
+                    if (fa.centerDialogOnMainAxis) {
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
+                        dialogCs.setHorizontalBias(fa.dialogView.id, 1f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
 //
                         val verticalCenter = resources.displayMetrics.heightPixels/2
-                        var difference = verticalCenter - fa.view.layoutParams.height/2
+                        var difference = verticalCenter - fa.dialogView.layoutParams.height/2
 
                         difference = if (difference < 0) 0 else difference
 
                         val firstVertexX = startX - xMargin
-                        val firstVertexY = difference + fa.view.layoutParams.height * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexY = difference + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
 
                         path.lineTo(firstVertexX, firstVertexY)
 
@@ -158,19 +164,19 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         dialogCs.applyTo(this)
                     } else {
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.setVerticalBias(fa.view.id, 1f)
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
 
                         dialogCs.connect(
-                            fa.view.id, ConstraintSet.RIGHT,
+                            fa.dialogView.id, ConstraintSet.RIGHT,
                             referenceView.id, ConstraintSet.LEFT,
                             xMargin.toInt()
                         )
 
                         val firstVertexX = startX - xMargin
-                        val firstVertexY = yMargin + fa.view.layoutParams.height * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexY = yMargin + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
 
                         path.lineTo(firstVertexX, firstVertexY)
 
@@ -188,20 +194,20 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                     path.moveTo(startX.toFloat(), startY.toFloat())
 
-                    if (fa.shouldCenterOnMainAxis) {
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setHorizontalBias(fa.view.id, 0f)
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
+                    if (fa.centerDialogOnMainAxis) {
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
+                        dialogCs.setHorizontalBias(fa.dialogView.id, 0f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
 
                         val verticalCenter = resources.displayMetrics.heightPixels/2
-                        var difference = verticalCenter - fa.view.layoutParams.height/2
+                        var difference = verticalCenter - fa.dialogView.layoutParams.height/2
 
                         difference = if (difference < 0) 0 else difference
 
                         val firstVertexX = startX + xMargin
-                        val firstVertexY = difference + fa.view.layoutParams.height * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexY = difference + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
 
                         path.lineTo(firstVertexX, firstVertexY)
 
@@ -213,13 +219,13 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         dialogCs.applyTo(this)
                     } else {
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.setHorizontalBias(fa.view.id, 0f)
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.setHorizontalBias(fa.dialogView.id, 0f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
 
                         val firstVertexX = startX + xMargin
-                        val firstVertexY = yMargin + fa.view.layoutParams.height * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexY = yMargin + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
 
                         path.lineTo(firstVertexX, firstVertexY)
 
@@ -237,26 +243,26 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 val xMargin = fa.referenceViewLocation[0] + dialogXOffsetPx
                 val yMargin = dialogYOffsetPx
 
-                if (fa.gravity == Gravity.TOP) {
+                if (fa.dialogGravity == Gravity.TOP) {
                     val startX = fa.referenceViewLocation[0] + viewWidth * fa.originOffsetPercent
                     val startY = fa.referenceViewLocation[1]
 
                     path.moveTo(startX.toFloat(), startY.toFloat())
 
-                    if (fa.shouldCenterOnMainAxis) {
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.setVerticalBias(fa.view.id, 1f)
+                    if (fa.centerDialogOnMainAxis) {
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
 
                         val horizontalCenter = resources.displayMetrics.widthPixels/2
 
-                        var difference = horizontalCenter - fa.view.layoutParams.width/2
+                        var difference = horizontalCenter - fa.dialogView.layoutParams.width/2
 
                         difference = if (difference < 0) 0 else difference
 
-                        val firstVertexX = difference + fa.view.layoutParams.width * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexX = difference + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
                         val firstVertexY = startY - yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
@@ -269,12 +275,12 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         dialogCs.applyTo(this)
                     } else {
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.setVerticalBias(fa.view.id, 1f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
 
-                        val firstVertexX = xMargin + fa.view.layoutParams.width * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexX = xMargin + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
                         val firstVertexY = startY - yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
@@ -293,20 +299,20 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                     path.moveTo(startX.toFloat(), startY.toFloat())
 
-                    if (fa.shouldCenterOnMainAxis) {
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.view.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setVerticalBias(fa.view.id, 0f)
+                    if (fa.centerDialogOnMainAxis) {
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
+                        dialogCs.setVerticalBias(fa.dialogView.id, 0f)
 
                         val horizontalCenter = resources.displayMetrics.widthPixels/2
 
-                        var difference = horizontalCenter - fa.view.layoutParams.width/2
+                        var difference = horizontalCenter - fa.dialogView.layoutParams.width/2
 
                         difference = if (difference < 0) 0 else difference
 
-                        val firstVertexX = difference + fa.view.layoutParams.width * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexX = difference + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
                         val firstVertexY = startY + yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
@@ -319,12 +325,12 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                         dialogCs.applyTo(this)
                     } else {
-                        dialogCs.connect(fa.view.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
-                        dialogCs.connect(fa.view.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setVerticalBias(fa.view.id, 0f)
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
+                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
+                        dialogCs.setVerticalBias(fa.dialogView.id, 0f)
 
-                        val firstVertexX = xMargin + fa.view.layoutParams.width * fa.destinationOffsetPercent.toFloat()
+                        val firstVertexX = xMargin + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
                         val firstVertexY = startY + yMargin
 
                         path.lineTo(firstVertexX, firstVertexY)
