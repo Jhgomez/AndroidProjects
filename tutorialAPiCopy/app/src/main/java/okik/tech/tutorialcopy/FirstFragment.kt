@@ -2,25 +2,24 @@ package okik.tech.tutorialcopy
 
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RenderEffect
-import android.graphics.Shader
+import android.graphics.Path
 import android.graphics.drawable.ShapeDrawable
 import android.graphics.drawable.shapes.OvalShape
-import android.graphics.drawable.shapes.RoundRectShape
+import android.os.Build
 import android.os.Bundle
-import android.util.Log
-import android.util.TypedValue
+import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
+import android.widget.FrameLayout.LayoutParams
+import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.doOnLayout
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.LinearSmoothScroller
-import androidx.recyclerview.widget.RecyclerView
 import okik.tech.tutorialcopy.databinding.DialogContentBinding
 import okik.tech.tutorialcopy.databinding.FragmentFirstBinding
-import okik.tech.tutorialcopy.databinding.RecyclerItemBinding
 
 /**
  * A simple [Fragment] subclass as the default destination in the navigation.
@@ -52,54 +51,96 @@ class FirstFragment : Fragment() {
         val adapter = MyAdapter(listOf(1,2,3,4,5,6,7,8,9))
         binding.recycler.adapter = adapter
 
+        binding.block?.setBackgroundColor(Color.BLUE)
+
         binding.buttonFirst.setOnClickListener {
-            val aView = manager.findViewByPosition(1)
+            val aView = manager.findViewByPosition(3)
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
-                if (aView != null) {
-                    val paint = Paint()
-                    paint.color = Color.GREEN
-                    paint.alpha = 0
-                    paint.isAntiAlias = true
-                    paint.style = Paint.Style.FILL
-                    paint.strokeWidth = 8f
 
+            }
 
-                    val n = 16f
+            if (aView != null) {
+                val paint = Paint()
+                paint.color = Color.GREEN
+                paint.alpha = 180
+                paint.isAntiAlias = true
+                paint.style = Paint.Style.STROKE
+                paint.strokeWidth = 16f
 
-//                    binding.clTtdl.setBackgroundColor(Color.TRANSPARENT)
-                    val roundShape = OvalShape()
+                val focusArea = FocusArea.Builder()
+                    .setView(aView) // binding.thete ?:
+//                        .setOuterAreaEffect(
+//                            RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+//                        )
+                    .setOuterAreaOverlayColor(Color.BLACK)
+                    .setOuterAreaOverlayAlpha(180)
+                    .setSurroundingAreaPadding(10, 10, 10, 10)
+                    .setSurroundingAreaBackgroundDrawableFactory(
+                        {
+                            val roundShape = OvalShape()
 
-                    val shapeDrawable = ShapeDrawable(roundShape)
+                            return@setSurroundingAreaBackgroundDrawableFactory ShapeDrawable(roundShape)
+                        }
+                    )
+//                        .setSurroundingThicknessEffect(
+//                            RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+//                        )
+                    .setSurroundingAreaPaint(paint)
+                    .setShouldClipToBackground(false)
+                    .setSurroundingThickness(50, 50, 50, 50)
+                    .build()
 
-                    val focusArea = FocusArea.Builder()
-                        .setView(aView)
-                        .setOuterAreaEffect(
-                            RenderEffect.createBlurEffect(100f, 100f, Shader.TileMode.CLAMP)
-                        )
-                        .setOuterAreaOverlayColor(Color.BLACK)
-                        .setOuterAreaOverlayAlpha(30)
-//                            .setSurroundingThicknessEffect(
-//                                RenderEffect.createBlurEffect(
-//                                    1f,
-//                                    1f,
-//                                    Shader.TileMode.CLAMP
-//                                )
-//                            )
-//                            .setSurroundingAreaPadding(
-//                                FocusArea.InnerPadding(10f, 10f, 10f, 10f)
-//                            )
-                        .setSurroundingAreaBackgroundDrawable(shapeDrawable)
-                        .setSurroundingAreaPaint(paint)
-                        .setShouldClipToBackground(true)
-                        .setSurroundingThickness(
-                            FocusArea.SurroundingThickness(50f, 50f, 50f, 50f)
-                        ).build()
+                val dialog = getDialog(focusArea)
 
+                val focusDialog = focusArea.generateMatchingFocusDialog(
+                    Gravity.BOTTOM,
+                    0,
+                    80,
+                    0.5,
+                    0.5,
+                    false,
+                    dialog
+                )
 
-                    (binding.root as TutorialDisplayLayout).renderFocusArea(focusArea)
-                }
+                (binding.root as TutorialDisplayLayout).renderFocusAreaWithDialog(focusArea, focusDialog)
             }
         }
+    }
+
+    private fun getDialog(
+        focusArea: FocusArea
+    ): View {
+        val dialog = BackgroundEffectRendererLayout(requireContext())
+
+        dialog.layoutParams = ConstraintLayout.LayoutParams(700, 530)
+
+        val content = DialogContentBinding.inflate(LayoutInflater.from(requireContext()))
+
+        content.root.layoutParams = LayoutParams(700, 530)
+
+        (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
+//
+//        content.root.setPadding(
+//            focusArea.surroundingAreaPadding.start.toInt(),
+//            focusArea.surroundingAreaPadding.top.toInt(),
+//            focusArea.surroundingAreaPadding.end.toInt(),
+//            focusArea.surroundingAreaPadding.bottom.toInt()
+//        )
+
+        dialog.setFallbackBackground(requireActivity().window.decorView.background)
+
+        dialog.addView(content.root)
+
+        content.tb.setOnClickListener {
+//            popi.dismiss()
+//            this.focusArea = null
+//
+//            for (i in 1 .. childCount -1) {
+//                getChildAt(i).visibility = GONE
+//            }
+        }
+
+        return dialog
     }
 
 
