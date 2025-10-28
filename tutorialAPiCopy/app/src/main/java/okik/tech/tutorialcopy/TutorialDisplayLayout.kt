@@ -42,49 +42,10 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         this.focusArea = focusArea
     }
 
-    fun renderFocusAreaWithDialog(focusArea: FocusArea) {
+    fun renderFocusAreaWithDialog(focusArea: FocusArea, focusDialog: FocusDialog) {
         this.renderFocusArea(focusArea)
 
-        val dialog = BackgroundEffectRendererLayout(context)
-
-        dialog.layoutParams = ConstraintLayout.LayoutParams(
-            700,
-            530
-        )
-
-        val content = DialogContentBinding.inflate(LayoutInflater.from(context))
-
-        val widthInPixels = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            300f,
-            resources.displayMetrics
-        )
-
-        val hInPixels = TypedValue.applyDimension(
-            TypedValue.COMPLEX_UNIT_DIP,
-            300f,
-            resources.displayMetrics
-        )
-
-        content.root.layoutParams = LayoutParams(700, 530)
-
-        (content.root.layoutParams as MarginLayoutParams).setMargins(0, 0, 0, 0)
-
-        content.root.setPadding(
-            focusArea.surroundingAreaPadding.start.toInt(),
-            focusArea.surroundingAreaPadding.top.toInt(),
-            focusArea.surroundingAreaPadding.end.toInt(),
-            focusArea.surroundingAreaPadding.bottom.toInt()
-        )
-
-        dialog.addView(content.root)
-
-        val backgroundSettings = BlurBackgroundSettings(
-            focusArea.surroundingThicknessEffect,
-            focusArea.shouldClipToBackground,
-            focusArea.surroundingAreaBackgroundDrawable,
-            focusArea.surroundingAreaPaint,
-            focusArea.surroundingAreaPadding,
+        val backgroundSettings = focusArea.generateBackgroundSettings(
             { recordingCanvas, focusView ->
                 val pos = IntArray(2)
                 focusView.getLocationOnScreen(pos)
@@ -101,37 +62,18 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             }
         )
 
-        if (context is Activity) {
-            dialog.setFallbackBackground((context as Activity).window.decorView.background)
+        if (context is Activity && focusDialog.view is BackgroundEffectRendererLayout) {
+            focusDialog.view.setBackgroundConfigs(
+                    backgroundSettings,
+                    if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
+                )
         }
-
-        dialog.setBackgroundConfigs(
-            backgroundSettings,
-            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
-        )
 
         val dialogWrapperLayout = DialogWrapperLayout(context)
 
-        val wrapperBackgroundSettings = BlurBackgroundSettings(
-            focusArea.surroundingThicknessEffect,
-            focusArea.shouldClipToBackground,
-            focusArea.surroundingAreaBackgroundDrawable,
-            focusArea.surroundingAreaPaint,
-            focusArea.surroundingAreaPadding,
-            { _, _ -> }
-        )
-
-        dialogWrapperLayout.renderRoundedDialog(
-            focusArea,
-            wrapperBackgroundSettings,
-            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect,
-            Gravity.BOTTOM,
-            -100f,
-            350f,
-            .5f,
-            .5f,
-            false,
-            dialog
+        dialogWrapperLayout.configuredDialog(
+            focusDialog,
+            if (focusDialog.shouldClipToBackground) contentCopy else contentWithEffect
         )
 
         val popi = PopupWindow(
@@ -141,16 +83,17 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             true // closes on outside touche if true
         )
 
-        popi.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
-
-        content.tb.setOnClickListener {
-            popi.dismiss()
-            this.focusArea = null
-
-            for (i in 1 .. childCount -1) {
-                getChildAt(i).visibility = GONE
-            }
+        popi.setOnDismissListener {
+//            popi.dismiss()
+//            this.focusArea = null
+//
+//            for (i in 1 .. childCount -1) {
+//                getChildAt(i).visibility = GONE
+//            }
         }
+
+
+        popi.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
     }
 
 
@@ -177,12 +120,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         (focusSurrounding.layoutParams as MarginLayoutParams).setMargins(xLocation.toInt(), yLocation.toInt(), 0 , 0)
 
-        val backgroundSettings = BlurBackgroundSettings(
-            focusArea.surroundingThicknessEffect,
-            focusArea.shouldClipToBackground,
-            focusArea.surroundingAreaBackgroundDrawable,
-            focusArea.surroundingAreaPaint,
-            focusArea.surroundingAreaPadding,
+        val backgroundSettings = focusArea.generateBackgroundSettings (
             { recordingCanvas, _ ->
                 recordingCanvas.translate(
                     -focusArea.viewLocation[0].toFloat() + focusArea.surroundingThickness.start,
