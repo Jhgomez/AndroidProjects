@@ -114,8 +114,12 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
         backgroundSettings: BackgroundSettings,
         backgroundViewRenderNode: RenderNode?
     ) {
+        setBackgroundRenderNode(backgroundViewRenderNode)
+        setBackgroundConfigs(backgroundSettings)
+    }
+
+    fun setBackgroundConfigs(backgroundSettings: BackgroundSettings) {
         this.backgroundSettings = backgroundSettings
-        this.backgroundViewRenderNode = backgroundViewRenderNode
         setWillNotDraw(false)
 
         configureDrawableAsBackground(backgroundSettings.backgroundDrawable)
@@ -135,9 +139,13 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
 
         // if should not clip to background the effect is applied to
         // the drawing
-        if (!backgroundSettings.shouldClipToBackground && backgroundViewRenderNode != null) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
             setRenderEffect(backgroundSettings.renderEffect)
         }
+    }
+
+    fun setBackgroundRenderNode(backgroundViewRenderNode: RenderNode?) {
+        this.backgroundViewRenderNode = backgroundViewRenderNode
     }
 
     override fun draw(canvas: Canvas) {
