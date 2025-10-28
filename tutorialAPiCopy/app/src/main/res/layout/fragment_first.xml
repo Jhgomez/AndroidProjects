@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<okik.tech.tutorialcopy.TutorialDisplayLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -23,16 +23,16 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-                android:id="@+id/otro"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="shohoskssk"
-                android:gravity="left"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toLeftOf="@id/button_first"
-                android:layout_marginEnd="24dp"
-                app:layout_constraintHorizontal_bias="1" />
+            android:id="@+id/otro"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="shohoskssk"
+            android:gravity="left"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@id/button_first"
+            android:layout_marginEnd="24dp"
+            app:layout_constraintHorizontal_bias="1" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
@@ -45,25 +45,24 @@
             />
 
         <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintLeft_toLeftOf="parent"
-                app:layout_constraintRight_toRightOf="parent"
-                android:text="some text again"
-                android:textColor="@color/white"
-                android:textSize="32sp"
-                android:layout_marginBottom="32dp"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:id="@+id/thete"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:text="some text again"
+            android:textColor="@color/black"
+            android:textSize="32sp"
+            android:layout_marginBottom="32dp"/>
 
-    <View
-        android:id="@+id/view_overlay"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        android:alpha="0.3"
-        android:visibility="gone"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/black"
-        />
-</FrameLayout>
+        <View
+            android:id="@+id/block"
+            android:layout_width="300dp"
+            android:layout_height="300dp"
+            app:layout_constraintBottom_toTopOf="@id/thete"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginBottom="32dp"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</okik.tech.tutorialcopy.TutorialDisplayLayout>
