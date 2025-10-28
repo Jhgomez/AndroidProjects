@@ -8,6 +8,7 @@ import android.graphics.RenderNode
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import android.graphics.drawable.ShapeDrawable
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewOutlineProvider
@@ -28,9 +29,17 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     private var paint: Paint = Paint()
     private var backgroundSettings: BackgroundSettings? = null
 
-    private val blurNode = RenderNode("BlurView node")
+    private val blurNode: RenderNode?
     var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            blurNode = RenderNode("BlurView node")
+        } else {
+            blurNode = null
+        }
+    }
 
     /**
      * If no background to the effect holder was set then this won't change the view in any way
@@ -103,7 +112,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
 
     fun setBackgroundConfigs(
         backgroundSettings: BackgroundSettings,
-        backgroundViewRenderNode: RenderNode
+        backgroundViewRenderNode: RenderNode?
     ) {
         this.backgroundSettings = backgroundSettings
         this.backgroundViewRenderNode = backgroundViewRenderNode
@@ -126,13 +135,13 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
 
         // if should not clip to background the effect is applied to
         // the drawing
-        if (!backgroundSettings.shouldClipToBackground) {
+        if (!backgroundSettings.shouldClipToBackground && backgroundViewRenderNode != null) {
             setRenderEffect(backgroundSettings.renderEffect)
         }
     }
 
     override fun draw(canvas: Canvas) {
-        if (backgroundSettings != null) {
+        if (backgroundSettings != null && blurNode != null) {
             drawBackgroundRenderNode(canvas)
         }
 
@@ -140,7 +149,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     }
 
     private fun drawBackgroundRenderNode(canvas: Canvas) {
-        blurNode.setPosition(0, 0, width, height)
+        blurNode!!.setPosition(0, 0, width, height)
 
         recordBackgroundViews()
 
@@ -149,7 +158,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     }
 
     private fun recordBackgroundViews() {
-        val recordingCanvas = blurNode.beginRecording()
+        val recordingCanvas = blurNode!!.beginRecording()
         if (fallBackDrawable != null) {
             fallBackDrawable!!.draw(recordingCanvas)
         }
