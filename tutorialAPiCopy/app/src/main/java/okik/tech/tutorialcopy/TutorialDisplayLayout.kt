@@ -9,10 +9,10 @@ import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowInsets
 import android.widget.FrameLayout
 import android.widget.PopupWindow
 import androidx.core.graphics.ColorUtils
+import androidx.core.view.size
 
 /**
  * This custom layout is expected to only have one child, which is usually a Linear or Constraint
@@ -27,6 +27,8 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     private val contentCopy: RenderNode?
     private val contentWithEffect: RenderNode?
     private val focusedContent: RenderNode?
+
+    private var popup: PopupWindow? = null
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
@@ -58,26 +60,38 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             if (focusDialog.shouldClipToBackground) contentCopy else contentWithEffect
         )
 
-        val popi = PopupWindow(
+        popup = PopupWindow(
             dialogWrapperLayout,
             ViewGroup.LayoutParams.MATCH_PARENT,
             ViewGroup.LayoutParams.MATCH_PARENT,
             true // closes on outside touche if true
         )
 
-        popi.setOnDismissListener {
-//            popi.dismiss()
-//            this.focusArea = null
-//
-//            for (i in 1 .. childCount -1) {
-//                getChildAt(i).visibility = GONE
-//            }
-        }
+        this.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {}
+            override fun onViewDetachedFromWindow(v: View) { dismissDialog() }
+        })
 
+        popup!!.setOnDismissListener(PopupWindow.OnDismissListener { popup = null })
 
-        popi.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
+        popup!!.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
     }
 
+    fun dismissDialog() {
+        this.focusArea = null
+
+        if (popup != null && popup!!.isShowing) popup!!.dismiss()
+
+        popup = null
+
+        for (i in 1..size - 1) {
+            val child = getChildAt(i)
+            if (child is BackgroundEffectRendererLayout) {
+                child.visibility = GONE
+                break
+            }
+        }
+    }
 
     private fun initComponents(focusArea: FocusArea) {
         // view at index 1
