@@ -139,7 +139,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
 
         // if should not clip to background the effect is applied to
         // the drawing
-        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S) {
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.S && !backgroundSettings.shouldClipToBackground) {
             setRenderEffect(backgroundSettings.renderEffect)
         }
     }
