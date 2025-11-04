@@ -44,45 +44,46 @@ class DialogWrapperLayout @JvmOverloads constructor(
             }
         }
 
-        val bridgeView = RenderNodeBehindPathView(context)
-        bridgeView.id = generateViewId()
 
         if (isEmpty()) {
             if (id == NO_ID) id = generateViewId()
 
             addReferenceView()
 
-            if (fd.dialogView.id == NO_ID) fd.dialogView.id = generateViewId()
+            val bridgeView = RenderNodeBehindPathView(context)
+            bridgeView.id = generateViewId()
+
+            val constraintSet = ConstraintSet()
+            constraintSet.clone(this)
+
+            constraintSet.connect(bridgeView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
+            constraintSet.connect(bridgeView.id, ConstraintSet.START, id, ConstraintSet.START)
+
+            bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
+
+            bridgeView.setBackgroundConfigs(
+                renderNode,
+                path,
+                fd.originBackgroundPaint,
+                true,
+                true,
+                fd.backgroundRenderEffect,
+                fd.originRenderCanvasPositionCommand
+            )
+
+            if (context is Activity) {
+                bridgeView.setFallbackBackground((context as Activity).window.decorView.background)
+            }
 
             addView(bridgeView)
+
+            if (fd.dialogView.id == NO_ID) fd.dialogView.id = generateViewId()
             addView(fd.dialogView)
         }
 
         cloneViewLocationAndSize(fd)
 
         setUpDialogAndBridgePath(fd)
-
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(this)
-
-        constraintSet.connect(bridgeView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-        constraintSet.connect(bridgeView.id, ConstraintSet.START, id, ConstraintSet.START)
-
-        bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-
-        bridgeView.setBackgroundConfigs(
-            renderNode,
-            path,
-            fd.originBackgroundPaint,
-            true,
-            true,
-            fd.backgroundRenderEffect,
-            fd.originRenderCanvasPositionCommand
-        )
-
-        if (context is Activity) {
-            bridgeView.setFallbackBackground((context as Activity).window.decorView.background)
-        }
     }
 
     private fun addReferenceView() {
