@@ -35,11 +35,13 @@ class DialogWrapperLayout @JvmOverloads constructor(
     }
 
     fun configuredDialog(fd: FocusDialog, renderNode: RenderNode?) {
-        if (context is Activity && fd.dialogView is BackgroundEffectRendererLayout) {
+        if (fd.dialogView is BackgroundEffectRendererLayout) {
             fd.dialogView.setBackgroundRenderNode(renderNode)
 
-            val act = getContext() as Activity
-            fd.dialogView.setFallbackBackground(act.window.decorView.background)
+            if (context is Activity) {
+                val act = getContext() as Activity
+                fd.dialogView.setFallbackBackground(act.window.decorView.background)
+            }
         }
 
         val bridgeView = RenderNodeBehindPathView(context)
