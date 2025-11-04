@@ -5,7 +5,9 @@ import android.graphics.Paint
 import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.view.View
+import androidx.annotation.RequiresApi
 import androidx.core.view.WindowInsetsCompat
 
 
@@ -156,11 +158,13 @@ class FocusArea private constructor(
          * the rounded area effect is not actually affecting the views below it, it is actually just
          * being draw on top of it
          */
+        @RequiresApi(Build.VERSION_CODES.S)
         fun setSurroundingThicknessEffect(surroundingThicknessEffect: RenderEffect): Builder {
             this.surroundingThicknessEffect = surroundingThicknessEffect
             return this
         }
 
+        @RequiresApi(Build.VERSION_CODES.S)
         fun setOuterAreaEffect(outerAreaEffect: RenderEffect?): Builder {
             this.outerAreaEffect = outerAreaEffect
             return this
