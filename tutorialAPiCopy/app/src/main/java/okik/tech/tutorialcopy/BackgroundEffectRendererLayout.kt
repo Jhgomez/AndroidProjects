@@ -98,7 +98,6 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
         end: Int
     ) {
         val backgroundDrawable = background
-        background = null
 
         if (backgroundDrawable is InsetDrawable) {
             background = InsetDrawable(backgroundDrawable.drawable, start, top, end, bottom)
