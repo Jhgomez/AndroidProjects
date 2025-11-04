@@ -43,8 +43,10 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     }
 
     fun renderFocusArea(focusArea: FocusArea) {
-        if (this.focusArea == null) {
+        if (childCount == 1) {
             initComponents(focusArea)
+        } else {
+            updateComponents(focusArea)
         }
 
         this.focusArea = focusArea
@@ -98,6 +100,21 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         val focusSurrounding = BackgroundEffectRendererLayout(context)
         focusSurrounding.id = generateViewId()
 
+        configureSurrounding(focusSurrounding, focusArea)
+
+        addView(focusSurrounding)
+    }
+
+    private fun updateComponents(focusArea: FocusArea) {
+        // view at index 1
+        val focusSurrounding = getChildAt(1) as BackgroundEffectRendererLayout;
+
+        configureSurrounding(focusSurrounding, focusArea)
+
+        focusSurrounding.visibility = VISIBLE
+    }
+
+    private fun configureSurrounding(focusSurrounding: BackgroundEffectRendererLayout, focusArea: FocusArea) {
         val shapeWidth = focusArea.view.width +
                 focusArea.surroundingThickness.start +
                 focusArea.surroundingThickness.end
@@ -133,8 +150,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         if (context is Activity) {
             focusSurrounding.setFallbackBackground((context as Activity).window.decorView.background)
         }
-
-        addView(focusSurrounding)
     }
 
     override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
