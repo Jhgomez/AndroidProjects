@@ -87,19 +87,11 @@ class DialogWrapperLayout @JvmOverloads constructor(
     }
 
     private fun addReferenceView() {
+        // constaints and margins will be added later
         val referenceView = View(context)
         referenceView.id = generateViewId()
         referenceView.layoutParams = LayoutParams(0, 0)
         addView(referenceView)
-
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(this)
-
-        // margins will be added later
-        constraintSet.connect(referenceView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-        constraintSet.connect(referenceView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-
-        constraintSet.applyTo(this)
     }
 
     /**
@@ -109,11 +101,36 @@ class DialogWrapperLayout @JvmOverloads constructor(
     private fun cloneViewLocationAndSize(fa: FocusDialog) {
         // view that acts a as a clone of the original view is always at index 0
         val referenceView = getChildAt(0)
+        referenceView.setBackgroundColor(Color.BLUE)
+
+        val isDrawnB4Start = fa.referenceViewLocation[0] < 0
+        val isDrawnB4Top = fa.referenceViewLocation[1] < 0
+
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(this)
+
+        val xConstraint = if (isDrawnB4Start) ConstraintSet.END else ConstraintSet.START
+        val yConstraint = if (isDrawnB4Top) ConstraintSet.BOTTOM else ConstraintSet.TOP
+
+        constraintSet.connect(referenceView.id, yConstraint, id, ConstraintSet.TOP)
+        constraintSet.connect(referenceView.id, xConstraint, id, ConstraintSet.START)
+
+        constraintSet.applyTo(this)
 
         val params = referenceView.layoutParams as LayoutParams
 
-        params.leftMargin = fa.referenceViewLocation[0]
-        params.topMargin = fa.referenceViewLocation[1]
+        if (isDrawnB4Start) {
+
+            params.marginEnd = -fa.referenceViewWidth - fa.referenceViewLocation[0]
+        } else{
+            params.marginStart = fa.referenceViewLocation[0]
+        }
+
+        if (isDrawnB4Top) {
+            params.bottomMargin = -fa.referenceViewHeight - fa.referenceViewLocation[1]
+        }else {
+            params.topMargin = fa.referenceViewLocation[1]
+        }
 
         params.width = fa.referenceViewWidth
         params.height = fa.referenceViewHeight
