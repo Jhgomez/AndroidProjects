@@ -71,7 +71,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         this.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
             override fun onViewAttachedToWindow(v: View) {}
-            override fun onViewDetachedFromWindow(v: View) { dismissDialog() }
+            override fun onViewDetachedFromWindow(v: View) { hideTutorialComponents() }
         })
 
         popup!!.setOnDismissListener(PopupWindow.OnDismissListener { popup = null })
@@ -79,7 +79,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
         popup!!.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
     }
 
-    fun dismissDialog() {
+    fun hideTutorialComponents() {
         this.focusArea = null
 
         if (popup != null && popup!!.isShowing) popup!!.dismiss()
