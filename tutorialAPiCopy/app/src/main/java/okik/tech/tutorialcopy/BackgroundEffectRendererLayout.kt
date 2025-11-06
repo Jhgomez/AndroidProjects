@@ -29,15 +29,15 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     private var paint: Paint = Paint()
     private var backgroundSettings: BackgroundSettings? = null
 
-    private val blurNode: RenderNode?
+    private val effectApplierRenderNode: RenderNode?
     var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
 
     init {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            blurNode = RenderNode("BlurView node")
+            effectApplierRenderNode = RenderNode("Effect node")
         } else {
-            blurNode = null
+            effectApplierRenderNode = null
         }
     }
 
@@ -148,7 +148,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     }
 
     override fun draw(canvas: Canvas) {
-        if (backgroundSettings != null && blurNode != null) {
+        if (backgroundSettings != null && effectApplierRenderNode != null) {
             drawBackgroundRenderNode(canvas)
         }
 
@@ -156,29 +156,29 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
     }
 
     private fun drawBackgroundRenderNode(canvas: Canvas) {
-        blurNode!!.setPosition(0, 0, width, height)
+        effectApplierRenderNode!!.setPosition(0, 0, width, height)
 
         recordBackgroundViews()
 
+        if (backgroundSettings!!.shouldClipToBackground) {
+            effectApplierRenderNode.setRenderEffect(backgroundSettings!!.renderEffect)
+        }
+
         // Draw on the system canvas
-        canvas.drawRenderNode(blurNode)
+        canvas.drawRenderNode(effectApplierRenderNode)
     }
 
     private fun recordBackgroundViews() {
-        val recordingCanvas = blurNode!!.beginRecording()
+        val recordingCanvas = effectApplierRenderNode!!.beginRecording()
         if (fallBackDrawable != null) {
             fallBackDrawable!!.draw(recordingCanvas)
-        }
-
-        if (backgroundSettings!!.shouldClipToBackground) {
-            blurNode.setRenderEffect(backgroundSettings!!.renderEffect)
         }
 
         backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas, this)
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 
-        blurNode.endRecording()
+        effectApplierRenderNode.endRecording()
     }
 
     fun setFallbackBackground(frameClearDrawable: Drawable?) {
