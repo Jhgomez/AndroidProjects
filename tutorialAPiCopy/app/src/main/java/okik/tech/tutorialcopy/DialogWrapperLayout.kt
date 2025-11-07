@@ -8,27 +8,19 @@ import android.graphics.RenderNode
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
+import android.view.ViewTreeObserver
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.isEmpty
 
 /**
- * This component is just a frame layout wrapped in a rounded corner shape, the difference
- * with a material card is that this one doesn't have "card elevation" and also you can apply
- * effects to its background without affecting the foreground(its content). The background, which
- * enables to render effects, exclusively, without affecting the content of the container, is actually
- * a view that lives behind the rest of the content, and is added automatically when view is
- * instantiated, it is referred to as "effectHolderBackground"
+ *
  */
 class DialogWrapperLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : ConstraintLayout(context, attrs) {
-
-    private val TRIANGLE_SPACING_PX = 150
-    val OPOSITE_LEG = dpToPx(16, context)
-
-    private val path: Path = Path()
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
@@ -51,6 +43,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             addReferenceView()
 
             val bridgeView = RenderNodeBehindPathView(context)
+            bridgeView.visibility = GONE
             bridgeView.id = generateViewId()
 
             val constraintSet = ConstraintSet()
@@ -58,18 +51,10 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             constraintSet.connect(bridgeView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
             constraintSet.connect(bridgeView.id, ConstraintSet.START, id, ConstraintSet.START)
+            constraintSet.applyTo(this)
 
+            // bridge view has to fill entire screen to be able to draw the path in the required location
             bridgeView.layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT)
-
-            bridgeView.setBackgroundConfigs(
-                renderNode,
-                path,
-                fd.originBackgroundPaint,
-                true,
-                true,
-                fd.backgroundRenderEffect,
-                fd.originRenderCanvasPositionCommand
-            )
 
             if (context is Activity) {
                 bridgeView.setFallbackBackground((context as Activity).window.decorView.background)
@@ -83,14 +68,54 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         cloneViewLocationAndSize(fd)
 
-        setUpDialogAndBridgePath(fd)
+        val dialogPreDrawListener = object : ViewTreeObserver.OnPreDrawListener {
+            override fun onPreDraw(): Boolean {
+                val referenceView = getChildAt(0)
+
+                if (fd.pathViewPathGeneratorCommand != null) {
+
+                    val path = fd.pathViewPathGeneratorCommand(referenceView, fd.dialogView)
+
+                    val bridgeView = getChildAt(1) as RenderNodeBehindPathView
+
+                    bridgeView.setBackgroundConfigs(
+                        renderNode,
+                        path,
+                        fd.originBackgroundPaint,
+                        true,
+                        true,
+                        fd.backgroundRenderEffect,
+                        fd.pathViewRenderCanvasPositionCommand
+                    )
+
+                    bridgeView.visibility = VISIBLE
+
+                    fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)
+                }
+
+                return true
+            }
+        }
+
+        fd.dialogView.viewTreeObserver.addOnPreDrawListener(dialogPreDrawListener)
+
+        this.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {}
+            override fun onViewDetachedFromWindow(v: View) {
+                fd.dialogView.viewTreeObserver.removeOnPreDrawListener(dialogPreDrawListener)
+            }
+        })
+
+        val referenceView = getChildAt(0)
+        fd.dialogConstraintsCommand(this, referenceView, fd.dialogView)
     }
 
     private fun addReferenceView() {
-        // constaints and margins will be added later
+        // constraints and margins will be added later
         val referenceView = View(context)
         referenceView.id = generateViewId()
         referenceView.layoutParams = LayoutParams(0, 0)
+        referenceView.setBackgroundColor(ColorUtils.setAlphaComponent(Color.YELLOW, 100))
         addView(referenceView)
     }
 
@@ -101,7 +126,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
     private fun cloneViewLocationAndSize(fa: FocusDialog) {
         // view that acts a as a clone of the original view is always at index 0
         val referenceView = getChildAt(0)
-        referenceView.setBackgroundColor(Color.BLUE)
+//        referenceView.setBackgroundColor(Color.BLUE)
 
         val isDrawnB4Start = fa.referenceViewLocation[0] < 0
         val isDrawnB4Top = fa.referenceViewLocation[1] < 0
@@ -136,236 +161,354 @@ class DialogWrapperLayout @JvmOverloads constructor(
         params.height = fa.referenceViewHeight
     }
 
-    private fun setUpDialogAndBridgePath(fa: FocusDialog) {
-        val viewHeight = fa.referenceViewHeight
-        val viewWidth = fa.referenceViewWidth
+    companion object {
+        fun constraintDialogToBottom(
+            constraintLayout: ConstraintLayout,
+            referenceView: View,
+            dialogView: View,
+            dialogXMarginDp: Float,
+            dialogYMarginDp: Float,
+            centerDialogOnMainAxis: Boolean
+        ) {
+            val dialogCs = ConstraintSet()
+            dialogCs.clone(constraintLayout)
 
-        val dialogXOffsetPx = fa.dialogXMarginDp
-        val dialogYOffsetPx = fa.dialogYMarginDp
+            //////////////////////////////////////////
 
-        val dialogCs = ConstraintSet()
-        dialogCs.clone(this)
+            val xMargin = dialogXMarginDp
+            val yMargin = dialogYMarginDp
 
-        val referenceView = getChildAt(0)
+            if (centerDialogOnMainAxis) {
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, constraintLayout.id, ConstraintSet.RIGHT)
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+                dialogCs.setVerticalBias(dialogView.id, 0f)
 
-        when (fa.dialogGravity) {
-            Gravity.START, Gravity.END -> {
-                val xMargin = dialogXOffsetPx
-                val yMargin = fa.referenceViewLocation[1] + dialogYOffsetPx
+                dialogCs.applyTo(constraintLayout)
+            } else {
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+                dialogCs.setVerticalBias(dialogView.id, 0f)
 
-                if (fa.dialogGravity == Gravity.START) {
-                    val startX = fa.referenceViewLocation[0]
-                    val startY = fa.referenceViewLocation[1] + viewHeight * fa.originOffsetPercent
-//
-                    path.moveTo(startX.toFloat(), startY.toFloat())
-//
-                    if (fa.centerDialogOnMainAxis) {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setHorizontalBias(fa.dialogView.id, 1f)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-//
-                        val verticalCenter = resources.displayMetrics.heightPixels/2
-                        var difference = verticalCenter - fa.dialogView.layoutParams.height/2
-
-                        difference = if (difference < 0) 0 else difference
-
-                        val firstVertexX = startX - xMargin
-                        val firstVertexY = difference + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX - OPOSITE_LEG
-                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    } else {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-
-                        dialogCs.connect(
-                            fa.dialogView.id, ConstraintSet.RIGHT,
-                            referenceView.id, ConstraintSet.LEFT,
-                            xMargin.toInt()
-                        )
-
-                        val firstVertexX = startX - xMargin
-                        val firstVertexY = yMargin + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX  - OPOSITE_LEG
-                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    }
-                } else {
-                    val startX = fa.referenceViewLocation[0] + viewWidth
-                    val startY = fa.referenceViewLocation[1] + viewHeight * fa.originOffsetPercent
-
-                    path.moveTo(startX.toFloat(), startY.toFloat())
-
-                    if (fa.centerDialogOnMainAxis) {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setHorizontalBias(fa.dialogView.id, 0f)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-
-                        val verticalCenter = resources.displayMetrics.heightPixels/2
-                        var difference = verticalCenter - fa.dialogView.layoutParams.height/2
-
-                        difference = if (difference < 0) 0 else difference
-
-                        val firstVertexX = startX + xMargin
-                        val firstVertexY = difference + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + OPOSITE_LEG
-                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    } else {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.setHorizontalBias(fa.dialogView.id, 0f)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT, xMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-
-                        val firstVertexX = startX + xMargin
-                        val firstVertexY = yMargin + fa.dialogView.layoutParams.height * fa.destinationOffsetPercent.toFloat()
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + OPOSITE_LEG
-                        val secondVertexY = firstVertexY + TRIANGLE_SPACING_PX
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    }
-                }
+                dialogCs.applyTo(constraintLayout)
             }
-            Gravity.TOP, Gravity.BOTTOM -> {
-                val xMargin = fa.referenceViewLocation[0] + dialogXOffsetPx
-                val yMargin = dialogYOffsetPx
 
-                if (fa.dialogGravity == Gravity.TOP) {
-                    val startX = fa.referenceViewLocation[0] + viewWidth * fa.originOffsetPercent
-                    val startY = fa.referenceViewLocation[1]
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+        }
 
-                    path.moveTo(startX.toFloat(), startY.toFloat())
+        fun constraintDialogToTop(
+            constraintLayout: ConstraintLayout,
+            referenceView: View,
+            dialogView: View,
+            dialogXMarginDp: Float,
+            dialogYMarginDp: Float,
+            centerDialogOnMainAxis: Boolean
+        ) {
+            val dialogXOffsetPx = dialogXMarginDp
+            val dialogYOffsetPx = dialogYMarginDp
 
-                    if (fa.centerDialogOnMainAxis) {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
+            val dialogCs = ConstraintSet()
+            dialogCs.clone(constraintLayout)
 
-                        val horizontalCenter = resources.displayMetrics.widthPixels/2
+            /////////////////////////////////
 
-                        var difference = horizontalCenter - fa.dialogView.layoutParams.width/2
+            val xMargin = dialogXOffsetPx
+            val yMargin = dialogYOffsetPx
 
-                        difference = if (difference < 0) 0 else difference
+            if (centerDialogOnMainAxis) {
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, constraintLayout.id, ConstraintSet.RIGHT)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP)
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
+                dialogCs.setVerticalBias(dialogView.id, 1f)
 
-                        val firstVertexX = difference + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
-                        val firstVertexY = startY - yMargin
+                dialogCs.applyTo(constraintLayout)
+            } else {
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP)
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
+                dialogCs.setVerticalBias(dialogView.id, 1f)
 
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY - OPOSITE_LEG
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    } else {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, referenceView.id, ConstraintSet.TOP, yMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, id, ConstraintSet.TOP)
-                        dialogCs.setVerticalBias(fa.dialogView.id, 1f)
-
-                        val firstVertexX = xMargin + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
-                        val firstVertexY = startY - yMargin
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY - OPOSITE_LEG
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    }
-                } else {
-                    val startX = fa.referenceViewLocation[0] + viewWidth * fa.originOffsetPercent
-                    val startY = fa.referenceViewLocation[1] + viewHeight
-
-                    path.moveTo(startX.toFloat(), startY.toFloat())
-
-                    if (fa.centerDialogOnMainAxis) {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.RIGHT, id, ConstraintSet.RIGHT)
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setVerticalBias(fa.dialogView.id, 0f)
-
-                        val horizontalCenter = resources.displayMetrics.widthPixels/2
-
-                        var difference = horizontalCenter - fa.dialogView.layoutParams.width/2
-
-                        difference = if (difference < 0) 0 else difference
-
-                        val firstVertexX = difference + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
-                        val firstVertexY = startY + yMargin
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY + OPOSITE_LEG
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    } else {
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.LEFT, id, ConstraintSet.LEFT, xMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.BOTTOM, yMargin.toInt())
-                        dialogCs.connect(fa.dialogView.id, ConstraintSet.BOTTOM, id, ConstraintSet.BOTTOM)
-                        dialogCs.setVerticalBias(fa.dialogView.id, 0f)
-
-                        val firstVertexX = xMargin + fa.dialogView.layoutParams.width * fa.destinationOffsetPercent.toFloat()
-                        val firstVertexY = startY + yMargin
-
-                        path.lineTo(firstVertexX, firstVertexY)
-
-                        val secondVertexX = firstVertexX + TRIANGLE_SPACING_PX
-                        val secondVertexY = firstVertexY + OPOSITE_LEG
-
-                        path.lineTo(secondVertexX, secondVertexY)
-                        path.close()
-
-                        dialogCs.applyTo(this)
-                    }
-                }
+                dialogCs.applyTo(constraintLayout)
             }
-            else -> throw IllegalArgumentException("Gravity can only be, top, bottom, start or end")
+
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).bottomMargin = yMargin.toInt()
+        }
+
+        fun constraintDialogToStart(
+            constraintLayout: ConstraintLayout,
+            referenceView: View,
+            dialogView: View,
+            dialogXMarginDp: Float,
+            dialogYMarginDp: Float,
+            centerDialogOnMainAxis: Boolean
+        ) {
+            val dialogXOffsetPx = dialogXMarginDp
+            val dialogYOffsetPx = dialogYMarginDp
+
+            val dialogCs = ConstraintSet()
+            dialogCs.clone(constraintLayout)
+
+            //////////////////////////////////////////
+
+            val xMargin = dialogXOffsetPx
+            val yMargin = dialogYOffsetPx
+
+            if (centerDialogOnMainAxis) {
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+                dialogCs.setHorizontalBias(dialogView.id, 1f)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
+
+                dialogCs.applyTo(constraintLayout)
+            } else {
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.TOP)
+                dialogCs.setVerticalBias(dialogView.id, 1f)
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT)
+
+                dialogCs.connect(
+                    dialogView.id, ConstraintSet.RIGHT,
+                    referenceView.id, ConstraintSet.LEFT,
+                    xMargin.toInt()
+                )
+
+                dialogCs.applyTo(constraintLayout)
+            }
+
+            (dialogView.layoutParams as MarginLayoutParams).marginEnd = xMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+        }
+
+        fun constraintDialogToEnd(
+            constraintLayout: ConstraintLayout,
+            referenceView: View,
+            dialogView: View,
+            dialogXMarginDp: Float,
+            dialogYMarginDp: Float,
+            centerDialogOnMainAxis: Boolean
+        ) {
+            val dialogXOffsetPx = dialogXMarginDp
+            val dialogYOffsetPx = dialogYMarginDp
+
+            val dialogCs = ConstraintSet()
+            dialogCs.clone(constraintLayout)
+
+            //////////////////////////////////////////
+
+            val xMargin = dialogXOffsetPx
+            val yMargin = dialogYOffsetPx
+
+            if (centerDialogOnMainAxis) {
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
+                dialogCs.connect(dialogView.id, ConstraintSet.BOTTOM, constraintLayout.id, ConstraintSet.BOTTOM)
+                dialogCs.setHorizontalBias(dialogView.id, 0f)
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, constraintLayout.id, ConstraintSet.RIGHT)
+
+                dialogCs.applyTo(constraintLayout)
+            } else {
+                dialogCs.connect(dialogView.id, ConstraintSet.TOP, referenceView.id, ConstraintSet.TOP)
+                dialogCs.setHorizontalBias(dialogView.id, 0f)
+                dialogCs.connect(dialogView.id, ConstraintSet.LEFT, referenceView.id, ConstraintSet.RIGHT)
+                dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, constraintLayout.id, ConstraintSet.RIGHT)
+
+                dialogCs.applyTo(constraintLayout)
+            }
+
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+        }
+
+        fun drawPathToBottomDialog(
+            referenceView: View,
+            dialogView: View,
+            originOffsetPercent: Double,
+            destinationOffsetPercent: Double,
+            triangleSpacing: Byte
+        ): Path {
+            val parentLocation = IntArray(2)
+
+            val parent = referenceView.parent
+
+            if (parent is View) {
+                parent.getLocationOnScreen(parentLocation)
+            }
+
+            val referenceViewLocation = IntArray(2)
+            referenceView.getLocationOnScreen(referenceViewLocation)
+            referenceViewLocation[0] = referenceViewLocation[0] - parentLocation[0]
+            referenceViewLocation[1] = referenceViewLocation[1] - parentLocation[1]
+
+            val dialogViewLocation = IntArray(2)
+            dialogView.getLocationOnScreen(dialogViewLocation)
+            dialogViewLocation[0] = dialogViewLocation[0] - parentLocation[0]
+            dialogViewLocation[1] = dialogViewLocation[1] - parentLocation[1]
+
+            // ======================================
+
+            val startX = referenceViewLocation[0] + referenceView.width * originOffsetPercent
+            val startY = referenceViewLocation[1] + referenceView.height
+
+            val path = Path()
+
+            path.moveTo(startX.toFloat(), startY.toFloat())
+
+            val firstVertexX = dialogViewLocation[0] + dialogView.width * destinationOffsetPercent.toFloat()
+            val firstVertexY = dialogViewLocation[1]
+
+            path.lineTo(firstVertexX, firstVertexY.toFloat())
+
+            val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexY = firstVertexY
+
+            path.lineTo(secondVertexX, secondVertexY.toFloat())
+            path.close()
+
+            return path
+        }
+
+        fun drawPathToTopDialog(
+            referenceView: View,
+            dialogView: View,
+            originOffsetPercent: Double,
+            destinationOffsetPercent: Double,
+            triangleSpacing: Byte
+        ): Path {
+            val parentLocation = IntArray(2)
+
+            val parent = referenceView.parent
+
+            if (parent is View) {
+                parent.getLocationOnScreen(parentLocation)
+            }
+
+            val referenceViewLocation = IntArray(2)
+            referenceView.getLocationOnScreen(referenceViewLocation)
+            referenceViewLocation[0] = referenceViewLocation[0] - parentLocation[0]
+            referenceViewLocation[1] = referenceViewLocation[1] - parentLocation[1]
+
+            val dialogViewLocation = IntArray(2)
+            dialogView.getLocationOnScreen(dialogViewLocation)
+            dialogViewLocation[0] = dialogViewLocation[0] - parentLocation[0]
+            dialogViewLocation[1] = dialogViewLocation[1] - parentLocation[1]
+
+            // ======================================
+            val startX = referenceViewLocation[0] + referenceView.width * originOffsetPercent
+            val startY = referenceViewLocation[1]
+
+            val path = Path()
+            path.moveTo(startX.toFloat(), startY.toFloat())
+
+            val firstVertexX = dialogViewLocation[0] + dialogView.width * destinationOffsetPercent.toFloat()
+            val firstVertexY = dialogViewLocation[1] + dialogView.height
+
+            path.lineTo(firstVertexX, firstVertexY.toFloat())
+
+            val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexY = firstVertexY
+
+            path.lineTo(secondVertexX, secondVertexY.toFloat())
+            path.close()
+
+            return path
+        }
+
+        fun drawPathToStartDialog(
+            referenceView: View,
+            dialogView: View,
+            originOffsetPercent: Double,
+            destinationOffsetPercent: Double,
+            triangleSpacing: Byte
+        ): Path {
+            val parentLocation = IntArray(2)
+
+            val parent = referenceView.parent
+
+            if (parent is View) {
+                parent.getLocationOnScreen(parentLocation)
+            }
+
+            val referenceViewLocation = IntArray(2)
+            referenceView.getLocationOnScreen(referenceViewLocation)
+            referenceViewLocation[0] = referenceViewLocation[0] - parentLocation[0]
+            referenceViewLocation[1] = referenceViewLocation[1] - parentLocation[1]
+
+            val dialogViewLocation = IntArray(2)
+            dialogView.getLocationOnScreen(dialogViewLocation)
+            dialogViewLocation[0] = dialogViewLocation[0] - parentLocation[0]
+            dialogViewLocation[1] = dialogViewLocation[1] - parentLocation[1]
+
+            // ======================================
+            val startX = referenceViewLocation[0]
+            val startY = referenceViewLocation[1] + referenceView.height * originOffsetPercent
+
+            val path = Path()
+            path.moveTo(startX.toFloat(), startY.toFloat())
+
+            val firstVertexX = dialogViewLocation[0] + dialogView.width
+            val firstVertexY = dialogViewLocation[1] + dialogView.height * destinationOffsetPercent.toFloat()
+
+            path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
+
+            val secondVertexX = firstVertexX
+            val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
+
+            path.lineTo(secondVertexX.toFloat(), secondVertexY.toFloat())
+            path.close()
+
+            return path
+        }
+
+        fun drawPathToEndDialog(
+            referenceView: View,
+            dialogView: View,
+            originOffsetPercent: Double,
+            destinationOffsetPercent: Double,
+            triangleSpacing: Byte
+        ): Path {
+            val parentLocation = IntArray(2)
+
+            val parent = referenceView.parent
+
+            if (parent is View) {
+                parent.getLocationOnScreen(parentLocation)
+            }
+
+            val referenceViewLocation = IntArray(2)
+            referenceView.getLocationOnScreen(referenceViewLocation)
+            referenceViewLocation[0] = referenceViewLocation[0] - parentLocation[0]
+            referenceViewLocation[1] = referenceViewLocation[1] - parentLocation[1]
+
+            val dialogViewLocation = IntArray(2)
+            dialogView.getLocationOnScreen(dialogViewLocation)
+            dialogViewLocation[0] = dialogViewLocation[0] - parentLocation[0]
+            dialogViewLocation[1] = dialogViewLocation[1] - parentLocation[1]
+
+            // ======================================
+            val startX = referenceViewLocation[0] + referenceView.width
+            val startY = referenceViewLocation[1] + referenceView.height * originOffsetPercent
+
+            val path = Path()
+            path.moveTo(startX.toFloat(), startY.toFloat())
+
+            val firstVertexX = dialogViewLocation[0]
+            val firstVertexY = dialogViewLocation[1] + dialogView.height * destinationOffsetPercent.toFloat()
+
+            path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
+
+            val secondVertexX = firstVertexX
+            val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
+
+            path.lineTo(secondVertexX.toFloat(), secondVertexY.toFloat())
+            path.close()
+
+            return path
         }
     }
 }
