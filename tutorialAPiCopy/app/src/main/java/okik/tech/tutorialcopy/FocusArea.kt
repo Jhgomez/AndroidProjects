@@ -64,12 +64,12 @@ class FocusArea private constructor(
     /**
      * A focus area by default consumes a "BackgroundEffectRenderLayout" for the surrounding area, that view
      * takes a background settings object and this is just a convenience method to generate them easily. This
-     * enables us to match the properties of the instances of this views used in the surrounding area
-     * and in the dialog background and control the canvas position in each instance as needed
+     * enables us to match the properties, used in the surrounding area/view of a focus area
 
-     * @param renderCanvasPositionCommand lets control the location/positon of the recording canvas that
-     * is drawing a "render node", which is passed to the instance of the "BackgroundEffectRenderLayout",
-     * and it also passes and reference the itself in case you need
+     * @param renderCanvasPositionCommand lets control the location/position of the recording canvas
+     * that copies/draws the views behind a "BackgroundEffectRenderLayout". This callback also passes a
+     * reference pf the BackgroundEffectRenderLayout so you can get things like its location on screen
+     * which is useful when modifying the position of the recording canvas
      */
     fun generateBackgroundSettings(renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): BackgroundSettings {
         return BackgroundSettings(
