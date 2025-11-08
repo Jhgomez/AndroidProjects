@@ -3,6 +3,7 @@ package okik.tech.tutorialcopy
 import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.RenderNode
 import android.os.Build
 import android.util.AttributeSet
@@ -155,11 +156,15 @@ class TutorialDisplayLayout @JvmOverloads constructor(
     override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
         // child at 0 should always be the only child added, by the user, to this custom view
         if (getChildAt(0).id == child?.id) {
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                return super.drawChild(canvas, child, drawingTime)
-            }
 
             focusArea?.also { fa ->
+                val overlayColor = ColorUtils.setAlphaComponent(fa.overlayColor, fa.overlayAlpha.toInt())
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    val isInvalidatedIssued = super.drawChild(canvas, child, drawingTime)
+                    canvas.drawColor(overlayColor)
+                    return isInvalidatedIssued
+                }
                 // this custom layout should only have one child and we record its content with no effect here
                 // so we can make a copy of the area we want to focus on
                 contentCopy!!.setPosition(0, 0, width, height)
@@ -178,7 +183,6 @@ class TutorialDisplayLayout @JvmOverloads constructor(
                 val contentWithEffectRecordingCanvas = contentWithEffect.beginRecording()
                 contentWithEffectRecordingCanvas.drawRenderNode(contentCopy)
 
-                val overlayColor = ColorUtils.setAlphaComponent(fa.overlayColor, fa.overlayAlpha.toInt())
                 contentWithEffectRecordingCanvas.drawColor(overlayColor)
 
                 contentWithEffect.endRecording()
