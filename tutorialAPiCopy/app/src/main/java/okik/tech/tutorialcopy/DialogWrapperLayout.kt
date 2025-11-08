@@ -6,7 +6,6 @@ import android.graphics.Color
 import android.graphics.Path
 import android.graphics.RenderNode
 import android.util.AttributeSet
-import android.view.Gravity
 import android.view.View
 import android.view.ViewTreeObserver
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -68,34 +67,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         cloneViewLocationAndSize(fd)
 
-        val dialogPreDrawListener = object : ViewTreeObserver.OnPreDrawListener {
-            override fun onPreDraw(): Boolean {
-                val referenceView = getChildAt(0)
-
-                if (fd.pathViewPathGeneratorCommand != null) {
-
-                    val path = fd.pathViewPathGeneratorCommand(referenceView, fd.dialogView)
-
-                    val bridgeView = getChildAt(1) as RenderNodeBehindPathView
-
-                    bridgeView.setBackgroundConfigs(
-                        renderNode,
-                        path,
-                        fd.originBackgroundPaint,
-                        true,
-                        true,
-                        fd.backgroundRenderEffect,
-                        fd.pathViewRenderCanvasPositionCommand
-                    )
-
-                    bridgeView.visibility = VISIBLE
-
-                    fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)
-                }
-
-                return true
-            }
-        }
+        val dialogPreDrawListener = getOnPreDrawListener(fd, renderNode)
 
         fd.dialogView.viewTreeObserver.addOnPreDrawListener(dialogPreDrawListener)
 
@@ -108,6 +80,36 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
         val referenceView = getChildAt(0)
         fd.dialogConstraintsCommand(this, referenceView, fd.dialogView)
+    }
+
+    private fun getOnPreDrawListener(fd: FocusDialog, renderNode: RenderNode?):
+            ViewTreeObserver.OnPreDrawListener = object : ViewTreeObserver.OnPreDrawListener {
+        override fun onPreDraw(): Boolean {
+            val referenceView = getChildAt(0)
+
+            if (fd.pathViewPathGeneratorCommand != null) {
+
+                val path = fd.pathViewPathGeneratorCommand(referenceView, fd.dialogView)
+
+                val bridgeView = getChildAt(1) as RenderNodeBehindPathView
+
+                bridgeView.setBackgroundConfigs(
+                    renderNode,
+                    path,
+                    fd.originBackgroundPaint,
+                    true,
+                    true,
+                    fd.backgroundRenderEffect,
+                    fd.pathViewRenderCanvasPositionCommand
+                )
+
+                bridgeView.visibility = VISIBLE
+
+                fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)
+            }
+
+            return true
+        }
     }
 
     private fun addReferenceView() {
@@ -173,11 +175,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
             val dialogCs = ConstraintSet()
             dialogCs.clone(constraintLayout)
 
-            //////////////////////////////////////////
-
-            val xMargin = dialogXMarginDp
-            val yMargin = dialogYMarginDp
-
             if (centerDialogOnMainAxis) {
                 dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
                 dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, constraintLayout.id, ConstraintSet.RIGHT)
@@ -195,8 +192,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
         }
 
         fun constraintDialogToTop(
@@ -207,16 +204,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogYMarginDp: Float,
             centerDialogOnMainAxis: Boolean
         ) {
-            val dialogXOffsetPx = dialogXMarginDp
-            val dialogYOffsetPx = dialogYMarginDp
-
             val dialogCs = ConstraintSet()
             dialogCs.clone(constraintLayout)
-
-            /////////////////////////////////
-
-            val xMargin = dialogXOffsetPx
-            val yMargin = dialogYOffsetPx
 
             if (centerDialogOnMainAxis) {
                 dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
@@ -235,8 +224,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).bottomMargin = yMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).bottomMargin = dialogYMarginDp.toInt()
         }
 
         fun constraintDialogToStart(
@@ -247,16 +236,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogYMarginDp: Float,
             centerDialogOnMainAxis: Boolean
         ) {
-            val dialogXOffsetPx = dialogXMarginDp
-            val dialogYOffsetPx = dialogYMarginDp
-
             val dialogCs = ConstraintSet()
             dialogCs.clone(constraintLayout)
-
-            //////////////////////////////////////////
-
-            val xMargin = dialogXOffsetPx
-            val yMargin = dialogYOffsetPx
 
             if (centerDialogOnMainAxis) {
                 dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
@@ -272,17 +253,11 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.connect(dialogView.id, ConstraintSet.LEFT, constraintLayout.id, ConstraintSet.LEFT)
                 dialogCs.connect(dialogView.id, ConstraintSet.RIGHT, referenceView.id, ConstraintSet.LEFT)
 
-                dialogCs.connect(
-                    dialogView.id, ConstraintSet.RIGHT,
-                    referenceView.id, ConstraintSet.LEFT,
-                    xMargin.toInt()
-                )
-
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginEnd = xMargin.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginEnd = dialogXMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
         }
 
         fun constraintDialogToEnd(
@@ -293,16 +268,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogYMarginDp: Float,
             centerDialogOnMainAxis: Boolean
         ) {
-            val dialogXOffsetPx = dialogXMarginDp
-            val dialogYOffsetPx = dialogYMarginDp
-
             val dialogCs = ConstraintSet()
             dialogCs.clone(constraintLayout)
-
-            //////////////////////////////////////////
-
-            val xMargin = dialogXOffsetPx
-            val yMargin = dialogYOffsetPx
 
             if (centerDialogOnMainAxis) {
                 dialogCs.connect(dialogView.id, ConstraintSet.TOP, constraintLayout.id, ConstraintSet.TOP)
@@ -321,8 +288,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = xMargin.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = yMargin.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
         }
 
         fun drawPathToBottomDialog(
@@ -365,9 +332,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             path.lineTo(firstVertexX, firstVertexY.toFloat())
 
             val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
-            val secondVertexY = firstVertexY
 
-            path.lineTo(secondVertexX, secondVertexY.toFloat())
+            path.lineTo(secondVertexX, firstVertexY.toFloat())
             path.close()
 
             return path
@@ -411,9 +377,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             path.lineTo(firstVertexX, firstVertexY.toFloat())
 
             val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
-            val secondVertexY = firstVertexY
 
-            path.lineTo(secondVertexX, secondVertexY.toFloat())
+            path.lineTo(secondVertexX, firstVertexY.toFloat())
             path.close()
 
             return path
@@ -456,10 +421,9 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
 
-            val secondVertexX = firstVertexX
             val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
 
-            path.lineTo(secondVertexX.toFloat(), secondVertexY.toFloat())
+            path.lineTo(firstVertexX.toFloat(), secondVertexY.toFloat())
             path.close()
 
             return path
@@ -502,10 +466,9 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
 
-            val secondVertexX = firstVertexX
             val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
 
-            path.lineTo(secondVertexX.toFloat(), secondVertexY.toFloat())
+            path.lineTo(firstVertexX.toFloat(), secondVertexY.toFloat())
             path.close()
 
             return path
