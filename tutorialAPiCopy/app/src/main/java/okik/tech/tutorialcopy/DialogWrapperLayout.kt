@@ -35,7 +35,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
             }
         }
 
-
         if (isEmpty()) {
             if (id == NO_ID) id = generateViewId()
 
@@ -168,8 +167,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
             constraintLayout: ConstraintLayout,
             referenceView: View,
             dialogView: View,
-            dialogXMarginDp: Float,
-            dialogYMarginDp: Float,
+            dialogXMarginPx: Double,
+            dialogYMarginPx: Double,
             centerDialogOnMainAxis: Boolean
         ) {
             val dialogCs = ConstraintSet()
@@ -192,16 +191,16 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginPx.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginPx.toInt()
         }
 
         fun constraintDialogToTop(
             constraintLayout: ConstraintLayout,
             referenceView: View,
             dialogView: View,
-            dialogXMarginDp: Float,
-            dialogYMarginDp: Float,
+            dialogXMarginPx: Double,
+            dialogYMarginPx: Double,
             centerDialogOnMainAxis: Boolean
         ) {
             val dialogCs = ConstraintSet()
@@ -224,16 +223,16 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).bottomMargin = dialogYMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginPx.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).bottomMargin = dialogYMarginPx.toInt()
         }
 
         fun constraintDialogToStart(
             constraintLayout: ConstraintLayout,
             referenceView: View,
             dialogView: View,
-            dialogXMarginDp: Float,
-            dialogYMarginDp: Float,
+            dialogXMarginPx: Double,
+            dialogYMarginPx: Double,
             centerDialogOnMainAxis: Boolean
         ) {
             val dialogCs = ConstraintSet()
@@ -256,16 +255,16 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginEnd = dialogXMarginDp.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginEnd = dialogXMarginPx.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginPx.toInt()
         }
 
         fun constraintDialogToEnd(
             constraintLayout: ConstraintLayout,
             referenceView: View,
             dialogView: View,
-            dialogXMarginDp: Float,
-            dialogYMarginDp: Float,
+            dialogXMarginPx: Double,
+            dialogYMarginPx: Double,
             centerDialogOnMainAxis: Boolean
         ) {
             val dialogCs = ConstraintSet()
@@ -288,8 +287,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 dialogCs.applyTo(constraintLayout)
             }
 
-            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginDp.toInt()
-            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginDp.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).marginStart = dialogXMarginPx.toInt()
+            (dialogView.layoutParams as MarginLayoutParams).topMargin = dialogYMarginPx.toInt()
         }
 
         fun drawPathToBottomDialog(
@@ -297,7 +296,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogView: View,
             originOffsetPercent: Double,
             destinationOffsetPercent: Double,
-            triangleSpacing: Byte
+            triangleSpacingPx: Double
         ): Path {
             val parentLocation = IntArray(2)
 
@@ -331,7 +330,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX, firstVertexY.toFloat())
 
-            val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexX = firstVertexX + triangleSpacingPx
 
             path.lineTo(secondVertexX, firstVertexY.toFloat())
             path.close()
@@ -344,7 +343,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogView: View,
             originOffsetPercent: Double,
             destinationOffsetPercent: Double,
-            triangleSpacing: Byte
+            triangleSpacingPx: Double
         ): Path {
             val parentLocation = IntArray(2)
 
@@ -376,9 +375,9 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX, firstVertexY.toFloat())
 
-            val secondVertexX = firstVertexX + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexX = firstVertexX + triangleSpacingPx
 
-            path.lineTo(secondVertexX, firstVertexY.toFloat())
+            path.lineTo(secondVertexX.toFloat(), firstVertexY.toFloat())
             path.close()
 
             return path
@@ -389,7 +388,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogView: View,
             originOffsetPercent: Double,
             destinationOffsetPercent: Double,
-            triangleSpacing: Byte
+            triangleSpacingPx: Double
         ): Path {
             val parentLocation = IntArray(2)
 
@@ -421,7 +420,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
 
-            val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexY = firstVertexY + triangleSpacingPx
 
             path.lineTo(firstVertexX.toFloat(), secondVertexY.toFloat())
             path.close()
@@ -434,7 +433,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             dialogView: View,
             originOffsetPercent: Double,
             destinationOffsetPercent: Double,
-            triangleSpacing: Byte
+            triangleSpacingPx: Double
         ): Path {
             val parentLocation = IntArray(2)
 
@@ -466,7 +465,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             path.lineTo(firstVertexX.toFloat(), firstVertexY.toFloat())
 
-            val secondVertexY = firstVertexY + dpToPx(triangleSpacing.toShort(), dialogView.context)
+            val secondVertexY = firstVertexY + triangleSpacingPx
 
             path.lineTo(firstVertexX.toFloat(), secondVertexY.toFloat())
             path.close()
