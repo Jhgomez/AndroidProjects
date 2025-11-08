@@ -5,7 +5,6 @@ import android.graphics.Paint
 import android.graphics.Path
 import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
-import android.view.Gravity
 import android.view.View
 
 /**
@@ -38,12 +37,6 @@ class FocusDialog private constructor(
     val referenceViewWidth: Int,
     val referenceViewHeight: Int,
     val shouldClipToBackground: Boolean,
-    val dialogGravity: Int,
-    val dialogXMarginDp: Float,
-    val dialogYMarginDp: Float,
-    val originOffsetPercent: Double,
-    val destinationOffsetPercent: Double,
-    val centerDialogOnMainAxis: Boolean,
     val dialogView: View,
     val backgroundRenderEffect: RenderEffect?,
     val pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit,
@@ -57,12 +50,6 @@ class FocusDialog private constructor(
         private var referenceViewHeight: Int? = null
         private var referenceViewLocation: IntArray? = null
         private var shouldClipToBackground: Boolean = true
-        private var gravity: Int = Gravity.BOTTOM
-        private var dialogXMarginDp: Short = 0
-        private var dialogYMarginDp: Short = 0
-        private var originOffsetPercent: Double = 0.5
-        private var destinationOffsetPercent: Double = 0.5
-        private var centerDialogOnMainAxis: Boolean = false
         private var view: View? = null
         private var backgroundRenderEffect: RenderEffect? = null
         private var pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _, _ -> }
@@ -92,42 +79,21 @@ class FocusDialog private constructor(
             this.dialogBackgroundPaint = dialogBackgroundPaint
             return this
         }
+
         fun setReferenceViewLocation(referenceViewLocation: IntArray): Builder{
             this.referenceViewLocation = referenceViewLocation
             return this
         }
+
         fun setReferenceViewSize(width: Int, height: Int): Builder {
             this.referenceViewWidth = width
             this.referenceViewHeight = height
 
             return this
         }
+
         fun setShouldClipToBackground(shouldClipToBackground: Boolean): Builder{
             this.shouldClipToBackground = shouldClipToBackground
-            return this
-        }
-        fun setDialogGravity(gravity: Int): Builder{
-            this.gravity = gravity
-            return this
-        }
-        fun setDialogXMarginDp(dialogXMarginDp: Short): Builder{
-            this.dialogXMarginDp = dialogXMarginDp
-            return this
-        }
-        fun setDialogYMarginDp(dialogYMarginDp: Short): Builder{
-            this.dialogYMarginDp = dialogYMarginDp
-            return this
-        }
-        fun setOriginOffsetPercent(originOffsetPercent: Double): Builder{
-            this.originOffsetPercent = originOffsetPercent
-            return this
-        }
-        fun setDestinationOffsetPercent(destinationOffsetPercent: Double): Builder{
-            this.destinationOffsetPercent = destinationOffsetPercent
-            return this
-        }
-        fun setCenterDialogOnMainAxis(centerDialogOnMainAxis: Boolean): Builder{
-            this.centerDialogOnMainAxis  = centerDialogOnMainAxis
             return this
         }
 
@@ -190,12 +156,6 @@ class FocusDialog private constructor(
                 referenceViewWidth!!,
                 referenceViewHeight!!,
                 shouldClipToBackground,
-                gravity,
-                dpToPx(dialogXMarginDp, this.view!!.context),
-                dpToPx(dialogYMarginDp, this.view!!.context),
-                originOffsetPercent,
-                destinationOffsetPercent,
-                centerDialogOnMainAxis,
                 view!!,
                 backgroundRenderEffect,
                 pathViewRenderCanvasPositionCommand,
