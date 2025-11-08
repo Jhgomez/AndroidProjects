@@ -86,7 +86,7 @@ class HomeDialog : DialogFragment() {
         val ft: FragmentTransaction = childFragmentManager.beginTransaction()
 //            ft.show(HomeDialog())
 
-        HomeDialogTwo().show(ft, "more")
+//        HomeDialogTwo().show(ft, "more")
 
         return binding.root
     }
