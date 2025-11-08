@@ -13,7 +13,7 @@ import android.view.View
  * that paints the views behind the path view, most likely you won't ever need to set this value when using a
  * "TutorialDisplayLayout" as the path view always fill the whole screen
  * @property pathViewPathGeneratorCommand This call back is triggered when dialogView has been measured,
- * positioned and is about to be draw to screen, and it will pass a reference to the path object that can
+ * positioned and is about to be draw on screen, and it will pass a reference to the path object that can
  * be used to create a connection between the view that is created as a copy of the view that the
  * dialog is visually "attached" to and the dialogView, you should use things like the reference view
  * and dialog view location on screen to draw the path, you could use convenience methods in "RenderNodeBehindPathView"
@@ -47,8 +47,8 @@ class FocusDialog private constructor(
     val dialogView: View,
     val backgroundRenderEffect: RenderEffect?,
     val pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit,
-    val pathViewPathGeneratorCommand: (Path, View, View) -> Path,
-    val dialogConstraintsCommand: (DialogWrapperLayout, View, View) -> Unit
+    val pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)?,
+    val dialogConstraintsCommand: (constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit
 ){
     class Builder {
         private var dialogBackgroundPaint: Paint? = null
@@ -66,20 +66,24 @@ class FocusDialog private constructor(
         private var view: View? = null
         private var backgroundRenderEffect: RenderEffect? = null
         private var pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _, _ -> }
-        private var pathViewPathGeneratorCommand: (Path, View, View) -> Path = { path, _, _ -> path }
-        private var dialogConstraintsCommand: ((DialogWrapperLayout, View, View) -> Unit)? = null
+        private var pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)? = null
+        private var dialogConstraintsCommand: ((constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit)? = null
 
         fun setPathViewRenderCanvasPositionCommand(pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): Builder {
             this.pathViewRenderCanvasPositionCommand = pathViewRenderCanvasPositionCommand
             return this
         }
 
-        fun pathViewPathGeneratorCommand(pathViewPathGeneratorCommand: (Path, View, View) -> Path): Builder {
+        fun setPathViewPathGeneratorCommand(
+            pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)?
+        ): Builder {
             this.pathViewPathGeneratorCommand = pathViewPathGeneratorCommand
             return this
         }
 
-        fun dialogConstraintsCommand(dialogConstraintsCommand: (DialogWrapperLayout, View, View) -> Unit): Builder {
+        fun setDialogConstraintsCommand(
+            dialogConstraintsCommand: (constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit
+        ): Builder {
             this.dialogConstraintsCommand = dialogConstraintsCommand
             return this
         }
@@ -177,7 +181,7 @@ class FocusDialog private constructor(
             }
 
             if (dialogConstraintsCommand == null) {
-                throw IllegalStateException("You have to explicitly set constraints for you dialog, use methods in DialogWrapperLayout if needed")
+                throw IllegalStateException("You have to explicitly set constraints for you dialog, set dialogConstraintsCommand value in FocusDialogBuilder, use methods like constraintDialogToBottom in DialogWrapperLayout")
             }
 
             return FocusDialog(
