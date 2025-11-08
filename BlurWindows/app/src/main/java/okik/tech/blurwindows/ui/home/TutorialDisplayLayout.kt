@@ -1,0 +1,209 @@
+package okik.tech.tutorialcopy
+
+import android.app.Activity
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.RenderNode
+import android.os.Build
+import android.util.AttributeSet
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.FrameLayout
+import android.widget.PopupWindow
+import androidx.core.graphics.ColorUtils
+import androidx.core.view.size
+
+/**
+ * This custom layout is expected to only have one child, which is usually a Linear or Constraint
+ * Layout or similar.
+ */
+class TutorialDisplayLayout @JvmOverloads constructor(
+    context: Context,
+    attrs: AttributeSet? = null
+) : FrameLayout(context, attrs) {
+    var focusArea: FocusArea? = null
+
+    private val contentCopy: RenderNode?
+    private val contentWithEffect: RenderNode?
+    private val focusedContent: RenderNode?
+
+    private var popup: PopupWindow? = null
+
+    init {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            contentCopy = RenderNode("ContentCopy")
+            contentWithEffect = RenderNode("BlurredContent")
+            focusedContent = RenderNode("FocusContent")
+        } else {
+            contentCopy = null
+            contentWithEffect = null
+            focusedContent = null
+        }
+    }
+
+    fun renderFocusArea(focusArea: FocusArea) {
+        if (childCount == 1) {
+            initComponents(focusArea)
+        } else {
+            updateComponents(focusArea)
+        }
+
+        this.focusArea = focusArea
+    }
+
+    fun renderFocusAreaWithDialog(focusArea: FocusArea, focusDialog: FocusDialog) {
+        this.renderFocusArea(focusArea)
+
+        val dialogWrapperLayout = DialogWrapperLayout(context)
+
+        dialogWrapperLayout.configuredDialog(
+            focusDialog,
+            if (focusDialog.shouldClipToBackground) contentCopy else contentWithEffect
+        )
+
+        popup = PopupWindow(
+            dialogWrapperLayout,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            true // closes on outside touche if true
+        )
+
+        this.addOnAttachStateChangeListener(object : OnAttachStateChangeListener {
+            override fun onViewAttachedToWindow(v: View) {}
+            override fun onViewDetachedFromWindow(v: View) { hideTutorialComponents() }
+        })
+
+        popup!!.setOnDismissListener(PopupWindow.OnDismissListener { popup = null })
+
+        popup!!.showAtLocation(this, Gravity.NO_GRAVITY, 0, 0)
+    }
+
+    fun hideTutorialComponents() {
+        this.focusArea = null
+
+        if (popup != null && popup!!.isShowing) popup!!.dismiss()
+
+        popup = null
+
+        for (i in 1..size - 1) {
+            val child = getChildAt(i)
+            if (child is BackgroundEffectRendererLayout) {
+                child.visibility = GONE
+                break
+            }
+        }
+    }
+
+    private fun initComponents(focusArea: FocusArea) {
+        // view at index 1
+        val focusSurrounding = BackgroundEffectRendererLayout(context)
+        focusSurrounding.id = generateViewId()
+
+        configureSurrounding(focusSurrounding, focusArea)
+
+        addView(focusSurrounding)
+    }
+
+    private fun updateComponents(focusArea: FocusArea) {
+        // view at index 1
+        val focusSurrounding = getChildAt(1) as BackgroundEffectRendererLayout;
+
+        configureSurrounding(focusSurrounding, focusArea)
+
+        focusSurrounding.visibility = VISIBLE
+    }
+
+    private fun configureSurrounding(focusSurrounding: BackgroundEffectRendererLayout, focusArea: FocusArea) {
+        val shapeWidth = focusArea.view.width +
+                focusArea.surroundingThickness.start +
+                focusArea.surroundingThickness.end
+
+        val shapeHeight = focusArea.view.height +
+                focusArea.surroundingThickness.top +
+                focusArea.surroundingThickness.bottom
+
+        focusSurrounding.layoutParams = LayoutParams(shapeWidth.toInt(), shapeHeight.toInt())
+
+        val xLocation = focusArea.viewLocation[0] -
+                focusArea.surroundingThickness.start
+
+        val yLocation = focusArea.viewLocation[1] -
+                focusArea.surroundingThickness.top
+
+        (focusSurrounding.layoutParams as MarginLayoutParams).setMargins(xLocation.toInt(), yLocation.toInt(), 0 , 0)
+
+        val backgroundSettings = focusArea.generateBackgroundSettings (
+            { recordingCanvas, _ ->
+                recordingCanvas.translate(
+                    -focusArea.viewLocation[0].toFloat() + focusArea.surroundingThickness.start,
+                    -focusArea.viewLocation[1].toFloat() + focusArea.surroundingThickness.top,
+                )
+            }
+        )
+
+        focusSurrounding.setBackgroundConfigs(
+            backgroundSettings,
+            if (focusArea.shouldClipToBackground) contentCopy else contentWithEffect
+        )
+
+        if (context is Activity) {
+            focusSurrounding.setFallbackBackground((context as Activity).window.decorView.background)
+        }
+    }
+
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        // child at 0 should always be the only child added, by the user, to this custom view
+        if (getChildAt(0).id == child?.id) {
+
+        }
+
+
+        // this will be true only if user passed a rounded surrounding object, so we need to
+        // render on canvas rounded background and then the view to focus
+        if (child is BackgroundEffectRendererLayout) {
+            if (focusArea != null) {
+                val hasSurrounding = focusArea!!.surroundingThickness.top > 0
+                        || focusArea!!.surroundingThickness.bottom > 0
+                        || focusArea!!.surroundingThickness.start > 0
+                        || focusArea!!.surroundingThickness.end > 0
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    if (hasSurrounding) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+
+                        canvas.translate(
+                            focusArea!!.viewLocation[0].toFloat(),
+                            focusArea!!.viewLocation[1].toFloat()
+                        )
+
+                        focusArea!!.view.draw(canvas)
+
+                        return isInvalidateIssued
+                    } else {
+                        focusArea!!.view.draw(canvas)
+
+                        return false
+                    }
+                } else {
+                    if (hasSurrounding) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+
+                        canvas.drawRenderNode(focusedContent!!)
+
+                        return isInvalidateIssued
+                    } else {
+                        canvas.drawRenderNode(focusedContent!!)
+
+                        return false
+                    }
+                }
+            }
+        }
+
+        // if no focus area has been specified just render the node
+        val invalidated = super.drawChild(canvas, child, drawingTime)
+        return invalidated
+    }
+}
+
