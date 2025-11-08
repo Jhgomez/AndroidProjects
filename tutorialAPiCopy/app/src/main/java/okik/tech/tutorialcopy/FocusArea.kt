@@ -262,14 +262,16 @@ class FocusArea private constructor(
 //                topBarHeight = view!!.rootWindowInsets?.getInsetsIgnoringVisibility(
 //                    WindowInsets.Type.statusBars()
 //                )?.top ?: 0
-                if (insets != null) {
-                    val topBarHeight = insets.getInsetsIgnoringVisibility(
-                //                        WindowInsets.Type.statusBars()
-                        WindowInsetsCompat.Type.statusBars()
-                    ).top
 
-                    viewLocation!![1] -= topBarHeight
-                }
+                val navBarLeft = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars()).left
+                viewLocation!![0] -= navBarLeft
+
+                val topBarHeight = insets.getInsetsIgnoringVisibility(
+            //                        WindowInsets.Type.statusBars()
+                    WindowInsetsCompat.Type.statusBars()
+                ).top
+
+                viewLocation!![1] -= topBarHeight
             } else if (viewLocation!!.size != 2) {
                 throw IllegalStateException("Location can only contain two values, x and y")
             }
