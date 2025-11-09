@@ -27,7 +27,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     private var shouldClipPath: Boolean = true
 
     private val blurNode: RenderNode?
-    var backgroundViewRenderNode: RenderNode? = null
+    private var backgroundViewRenderNode: RenderNode? = null
     private var fallBackDrawable: Drawable? = null
 
     private var path: Path? = null
@@ -47,6 +47,12 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
         this.paint = paint
     }
 
+    fun setBackgroundViewRenderNode(renderNode: RenderNode) {
+        this.backgroundViewRenderNode = renderNode
+    }
+
+    fun getPath(): Path = this.path ?: Path()
+
     fun setBackgroundConfigs(
         backgroundViewRenderNode: RenderNode?,
         path: Path,
@@ -56,6 +62,7 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
         renderEffect: RenderEffect?,
         renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit
     ) {
+        this.renderEffect = renderEffect
         this.setEffectOnBackgroundOnly = setEffectOnBackgroundOnly
         this.backgroundViewRenderNode = backgroundViewRenderNode
         this.path = path
@@ -89,6 +96,15 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
         }
 
 //        super.draw(canvas)
+    }
+
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+    }
+
+    override fun dispatchDraw(canvas: Canvas) {
+        super.dispatchDraw(canvas)
     }
 
     private fun drawBackgroundRenderNode(canvas: Canvas) {
