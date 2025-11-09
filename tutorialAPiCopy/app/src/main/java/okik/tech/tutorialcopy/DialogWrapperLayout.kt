@@ -2,12 +2,15 @@ package okik.tech.tutorialcopy
 
 import android.app.Activity
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Path
 import android.graphics.RenderNode
+import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewTreeObserver
+import android.widget.PopupWindow
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.ColorUtils
@@ -20,12 +23,102 @@ class DialogWrapperLayout @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null
 ) : ConstraintLayout(context, attrs) {
+    var focusArea: FocusArea? = null
+
+    private var contentCopy: RenderNode? = null
+    private val contentWithEffect: RenderNode?
+    private val focusedContent: RenderNode?
 
     init {
         setBackgroundColor(Color.TRANSPARENT)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            contentWithEffect = RenderNode("BlurredContent")
+            focusedContent = RenderNode("FocusContent")
+        } else {
+            contentWithEffect = null
+            focusedContent = null
+        }
     }
 
-    fun configuredDialog(fd: FocusDialog, renderNode: RenderNode?) {
+    private fun addSurroundingFocusAreaView() {
+        // view at index 0
+        val focusSurrounding = BackgroundEffectRendererLayout(context)
+        focusSurrounding.id = generateViewId()
+
+        addView(focusSurrounding)
+    }
+
+    private fun configureSurroundingFocusAreaView(
+        fa: FocusArea,
+        renderNode: RenderNode?
+    ) {
+        val referenceViewWidth = fa.view.width +
+                fa.surroundingThickness.start +
+                fa.surroundingThickness.end
+
+        val referenceViewHeight = fa.view.height +
+                fa.surroundingThickness.top +
+                fa.surroundingThickness.bottom
+
+        val focusViewXLoc = fa.viewLocation[0] - fa.surroundingThickness.start
+        val focusViewYLoc = fa.viewLocation[1] - fa.surroundingThickness.top
+
+        val isDrawnB4Start = focusViewXLoc  < 0
+        val isDrawnB4Top = focusViewYLoc < 0
+
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(this)
+
+        val xConstraint = if (isDrawnB4Start) ConstraintSet.END else ConstraintSet.START
+        val yConstraint = if (isDrawnB4Top) ConstraintSet.BOTTOM else ConstraintSet.TOP
+
+        val focusSurrounding = getChildAt(0) as BackgroundEffectRendererLayout;
+
+//        focusSurrounding.visibility = VISIBLE
+
+        constraintSet.connect(focusSurrounding.id, yConstraint, id, ConstraintSet.TOP)
+        constraintSet.connect(focusSurrounding.id, xConstraint, id, ConstraintSet.START)
+
+        constraintSet.applyTo(this)
+
+        val params = focusSurrounding.layoutParams as LayoutParams
+
+        if (isDrawnB4Start) {
+            params.marginEnd = (-referenceViewWidth - focusViewXLoc).toInt()
+        } else{
+            params.marginStart = focusViewXLoc.toInt()
+        }
+
+        if (isDrawnB4Top) {
+            params.bottomMargin = (-referenceViewHeight - focusViewYLoc).toInt()
+        }else {
+            params.topMargin = focusViewYLoc.toInt()
+        }
+
+        params.width = referenceViewWidth.toInt()
+        params.height = referenceViewHeight.toInt()
+
+        val backgroundSettings = fa.generateBackgroundSettings (
+            { recordingCanvas, _ ->
+                recordingCanvas.translate(
+                    -fa.viewLocation[0].toFloat() + fa.surroundingThickness.start,
+                    -fa.viewLocation[1].toFloat() + fa.surroundingThickness.top,
+                )
+            }
+        )
+
+        focusSurrounding.setBackgroundConfigs(backgroundSettings, renderNode)
+
+        if (context is Activity) {
+            focusSurrounding.setFallbackBackground((context as Activity).window.decorView.background)
+        }
+    }
+
+    fun configuredDialog(fa: FocusArea, fd: FocusDialog, renderNode: RenderNode?) {
+        contentCopy = renderNode
+        focusArea = fa
+
         if (fd.dialogView is BackgroundEffectRendererLayout) {
             fd.dialogView.setBackgroundRenderNode(renderNode)
 
@@ -38,10 +131,9 @@ class DialogWrapperLayout @JvmOverloads constructor(
         if (isEmpty()) {
             if (id == NO_ID) id = generateViewId()
 
-            addReferenceView()
+            addSurroundingFocusAreaView()
 
             val bridgeView = RenderNodeBehindPathView(context)
-            bridgeView.visibility = GONE
             bridgeView.id = generateViewId()
 
             val constraintSet = ConstraintSet()
@@ -64,7 +156,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
             addView(fd.dialogView)
         }
 
-        cloneViewLocationAndSize(fd)
+        configureSurroundingFocusAreaView(fa, renderNode)
 
         val dialogPreDrawListener = getOnPreDrawListener(fd, renderNode)
 
@@ -102,8 +194,6 @@ class DialogWrapperLayout @JvmOverloads constructor(
                     fd.pathViewRenderCanvasPositionCommand
                 )
 
-                bridgeView.visibility = VISIBLE
-
                 fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)
             }
 
@@ -111,55 +201,162 @@ class DialogWrapperLayout @JvmOverloads constructor(
         }
     }
 
-    private fun addReferenceView() {
-        // constraints and margins will be added later
-        val referenceView = View(context)
-        referenceView.id = generateViewId()
-        referenceView.layoutParams = LayoutParams(0, 0)
-        referenceView.setBackgroundColor(ColorUtils.setAlphaComponent(Color.YELLOW, 100))
-        addView(referenceView)
+    override fun draw(canvas: Canvas) {
+            focusArea?.also { fa ->
+                val overlayColor =
+                    ColorUtils.setAlphaComponent(fa.overlayColor, fa.overlayAlpha.toInt())
+
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+                    canvas.drawColor(overlayColor)
+                }
+
+                if (contentCopy != null) {
+                    // create a version of the original view that lives in "contentCopy" and apply the
+                    // passed effect
+                    contentWithEffect!!.setRenderEffect(fa.outerAreaEffect)
+
+                    contentWithEffect.setPosition(0, 0, width, height)
+                    val contentWithEffectRecordingCanvas = contentWithEffect.beginRecording()
+                    contentWithEffectRecordingCanvas.drawRenderNode(contentCopy!!)
+
+                    contentWithEffectRecordingCanvas.drawColor(overlayColor)
+
+                    contentWithEffect.endRecording()
+
+                    // draw the applied effect to content to canvas of custom layout
+                    canvas.drawRenderNode(contentWithEffect)
+
+                    // make a copy of original content but only of the specified view and the requested
+                    // surrounding area
+                    if (fa.viewLocation.size == 2) {
+                        var focusWidth = fa.view.width
+                        var focusHeight = fa.view.height
+
+                        var translationX = fa.viewLocation[0].toFloat()
+                        var translationY = fa.viewLocation[1].toFloat()
+
+                        var canvasTranslationX = -fa.viewLocation[0].toFloat()
+                        var canvasTranslationY = -fa.viewLocation[1].toFloat()
+
+                        // here is where we add the surrounding area thickness as a square which is a
+                        // exact copy of the actual surrounding but, again, note that its limitation is
+                        // that the surrounding area shape can only be a square
+                        //                    if (fa.roundedCornerSurrounding == null) {
+                        // if user wants to apply an effect to this surrounding area we need to make
+                        // a copy of it and then another copy just or the view user wants to add focus on
+                        // but if no effect added to this focus area there is no need
+
+                        //                    }
+
+                        focusedContent!!.setPosition(0, 0, focusWidth, focusHeight)
+
+                        focusedContent.translationX = translationX
+                        focusedContent.translationY = translationY
+
+                        val focusAreaRecordingCanvas = focusedContent.beginRecording()
+
+                        focusAreaRecordingCanvas.translate(
+                            canvasTranslationX,
+                            canvasTranslationY
+                        )
+
+                        focusAreaRecordingCanvas.drawRenderNode(contentCopy!!)
+
+                        focusedContent.endRecording()
+
+                        // note the focus area was not draw here yet, that is because it will be draw above its
+                        // specified surrounding area which at the same time has to be rendered above
+                        // the background overlay
+
+                    }
+                }
+            }
+
+            super.draw(canvas)
     }
 
-    /**
-     * @param view we will use this view to set up a clone that the dialog will use as a reference
-     * to define its constraints
-     */
-    private fun cloneViewLocationAndSize(fa: FocusDialog) {
-        // view that acts a as a clone of the original view is always at index 0
-        val referenceView = getChildAt(0)
-//        referenceView.setBackgroundColor(Color.BLUE)
+    override fun dispatchDraw(canvas: Canvas) {
+        super.dispatchDraw(canvas)
+    }
 
-        val isDrawnB4Start = fa.referenceViewLocation[0] < 0
-        val isDrawnB4Top = fa.referenceViewLocation[1] < 0
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+    }
 
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(this)
+    fun updateBackground(renderNode: RenderNode) {
+        val focusAreaView = getChildAt(0) as BackgroundEffectRendererLayout
+        focusAreaView.setBackgroundRenderNode(renderNode)
+        focusAreaView.invalidate()
 
-        val xConstraint = if (isDrawnB4Start) ConstraintSet.END else ConstraintSet.START
-        val yConstraint = if (isDrawnB4Top) ConstraintSet.BOTTOM else ConstraintSet.TOP
+        val bridgeView = getChildAt(1) as RenderNodeBehindPathView
+        bridgeView.setBackgroundViewRenderNode(renderNode)
+        bridgeView.invalidate()
 
-        constraintSet.connect(referenceView.id, yConstraint, id, ConstraintSet.TOP)
-        constraintSet.connect(referenceView.id, xConstraint, id, ConstraintSet.START)
+        val dialogView = getChildAt(2) as BackgroundEffectRendererLayout
+        dialogView.setBackgroundRenderNode(renderNode)
+        dialogView.invalidate()
 
-        constraintSet.applyTo(this)
+        invalidate()
+    }
 
-        val params = referenceView.layoutParams as LayoutParams
 
-        if (isDrawnB4Start) {
+    override fun drawChild(canvas: Canvas, child: View?, drawingTime: Long): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
+            // since we are not using render nodes in this case, we have to wait until the
+            // last child is draw to then be able to draw the view we want to focus on and
+            // then move the canvas to match its location on the screen, if we move the canvas
+            // before this, then children draw after moving canvas will be affected
+            if (getChildAt(2).id == child?.id) {
+                if (focusArea != null) {
+                    val hasSurrounding = focusArea!!.surroundingThickness.top > 0
+                            || focusArea!!.surroundingThickness.bottom > 0
+                            || focusArea!!.surroundingThickness.start > 0
+                            || focusArea!!.surroundingThickness.end > 0
 
-            params.marginEnd = -fa.referenceViewWidth - fa.referenceViewLocation[0]
-        } else{
-            params.marginStart = fa.referenceViewLocation[0]
+                    if (hasSurrounding) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+
+                        canvas.translate(
+                            focusArea!!.viewLocation[0].toFloat(),
+                            focusArea!!.viewLocation[1].toFloat()
+                        )
+
+                        focusArea!!.view.draw(canvas)
+
+                        return isInvalidateIssued
+                    } else {
+                        focusArea!!.view.draw(canvas)
+
+                        return false
+                    }
+                }
+            }
+        } else {
+            if (getChildAt(0).id == child?.id) {
+                if (focusArea != null) {
+                    val hasSurrounding = focusArea!!.surroundingThickness.top > 0
+                            || focusArea!!.surroundingThickness.bottom > 0
+                            || focusArea!!.surroundingThickness.start > 0
+                            || focusArea!!.surroundingThickness.end > 0
+
+                    if (hasSurrounding) {
+                        val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
+
+                        canvas.drawRenderNode(focusedContent!!)
+
+                        return isInvalidateIssued
+                    } else {
+                        canvas.drawRenderNode(focusedContent!!)
+
+                        return false
+                    }
+                }
+            }
         }
 
-        if (isDrawnB4Top) {
-            params.bottomMargin = -fa.referenceViewHeight - fa.referenceViewLocation[1]
-        }else {
-            params.topMargin = fa.referenceViewLocation[1]
-        }
-
-        params.width = fa.referenceViewWidth
-        params.height = fa.referenceViewHeight
+        // if no focus area has been specified just render the node
+        val invalidated = super.drawChild(canvas, child, drawingTime)
+        return invalidated
     }
 
     companion object {
@@ -332,7 +529,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
             val secondVertexX = firstVertexX + triangleSpacingPx
 
-            path.lineTo(secondVertexX, firstVertexY.toFloat())
+            path.lineTo(secondVertexX.toFloat(), firstVertexY.toFloat())
             path.close()
 
             return path
