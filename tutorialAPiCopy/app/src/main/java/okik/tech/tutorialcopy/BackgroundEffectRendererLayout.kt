@@ -174,7 +174,7 @@ class BackgroundEffectRendererLayout @JvmOverloads constructor(
             fallBackDrawable!!.draw(recordingCanvas)
         }
 
-        backgroundSettings!!.renderCanvasPositionCommand.invoke(recordingCanvas, this)
+        recordingCanvas.translate(-left.toFloat(), -top.toFloat())
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 
