@@ -20,7 +20,6 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : View(context, attrs){
     private var paint: Paint = Paint()
-    private var renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _, _ -> }
     private var renderEffect: RenderEffect? = null
 
     private var setEffectOnBackgroundOnly = true
@@ -59,15 +58,13 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
         pathPaint: Paint,
         shouldClipPath: Boolean,
         setEffectOnBackgroundOnly: Boolean,
-        renderEffect: RenderEffect?,
-        renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit
+        renderEffect: RenderEffect?
     ) {
         this.renderEffect = renderEffect
         this.setEffectOnBackgroundOnly = setEffectOnBackgroundOnly
         this.backgroundViewRenderNode = backgroundViewRenderNode
         this.path = path
         this.shouldClipPath = shouldClipPath
-        this.renderCanvasPositionCommand = renderCanvasPositionCommand
         setWillNotDraw(false)
 
         this.paint = pathPaint
@@ -126,8 +123,6 @@ class RenderNodeBehindPathView @JvmOverloads constructor(
         if (setEffectOnBackgroundOnly) {
             blurNode.setRenderEffect(renderEffect)
         }
-
-        renderCanvasPositionCommand.invoke(recordingCanvas, this)
 
         recordingCanvas.drawRenderNode(backgroundViewRenderNode!!)
 

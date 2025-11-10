@@ -39,7 +39,6 @@ class FocusDialog private constructor(
     val shouldClipToBackground: Boolean,
     val dialogView: View,
     val backgroundRenderEffect: RenderEffect?,
-    val pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit,
     val pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)?,
     val dialogConstraintsCommand: (constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit
 ){
@@ -52,14 +51,8 @@ class FocusDialog private constructor(
         private var shouldClipToBackground: Boolean = true
         private var view: View? = null
         private var backgroundRenderEffect: RenderEffect? = null
-        private var pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit = { _, _ -> }
         private var pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)? = null
         private var dialogConstraintsCommand: ((constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit)? = null
-
-        fun setPathViewRenderCanvasPositionCommand(pathViewRenderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): Builder {
-            this.pathViewRenderCanvasPositionCommand = pathViewRenderCanvasPositionCommand
-            return this
-        }
 
         fun setPathViewPathGeneratorCommand(
             pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)?
@@ -158,7 +151,6 @@ class FocusDialog private constructor(
                 shouldClipToBackground,
                 view!!,
                 backgroundRenderEffect,
-                pathViewRenderCanvasPositionCommand,
                 pathViewPathGeneratorCommand,
                 dialogConstraintsCommand!!
             )

@@ -183,8 +183,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
                     fd.originBackgroundPaint,
                     true,
                     true,
-                    fd.backgroundRenderEffect,
-                    fd.pathViewRenderCanvasPositionCommand
+                    fd.backgroundRenderEffect
                 )
 
                 fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)
