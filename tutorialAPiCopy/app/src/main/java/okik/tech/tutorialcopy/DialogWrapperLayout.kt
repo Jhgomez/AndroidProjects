@@ -99,14 +99,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
         params.width = referenceViewWidth.toInt()
         params.height = referenceViewHeight.toInt()
 
-        val backgroundSettings = fa.generateBackgroundSettings (
-            { recordingCanvas, _ ->
-                recordingCanvas.translate(
-                    -fa.viewLocation[0].toFloat() + fa.surroundingThickness.start,
-                    -fa.viewLocation[1].toFloat() + fa.surroundingThickness.top,
-                )
-            }
-        )
+        val backgroundSettings = fa.generateBackgroundSettings()
 
         focusSurrounding.setBackgroundConfigs(backgroundSettings, renderNode)
 

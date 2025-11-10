@@ -12,18 +12,13 @@ import androidx.core.view.WindowInsetsCompat
 
 
 /**
- * This method makes a copy in a "Recording Canvas" of the specified view but it also copies its
- * surroundings(the surrounding area is determined by surroundingThickness param), note if the background
- * of the layout containing your views has been set to "transparent" only the nodes within the
- * "window"(view + surrounding thickness) with a non transparent background will have the "focus"
- * feel(will not be applied any effect that are applied to the outer area), giving visual focus to the content
- * within the window. Nonetheless, you can add a different effect to the surrounding thickness area.
- * A limitation of this method is that the window area can't have rounded corners but in turn its content will
- * be an exact copy of the underlying view(if no effect applied to thickness area) as opposed with
- * the other method in which the surrounding area can have rounded corners but the surrounding area
- * will apply its effects(or paint color), if any, on top of any effect applied to the original
- * content(outer area, meaning, outside thickness area), like blur or a simple color painted
- * on top the screen
+ * This class is intended to be used inside a "TutorialDisplayLayout" instance, when you display a
+ * dialog using that view API you have the option to render just focus, optionally add a view that
+ * serves as a dialog and optionally add a path view which usually is used to connect the focus view
+ * with the dialog view, so you interact with up three components depending on the methods you call,
+ * This class lets you configure the focus view only.
+ *
+ *
  *
  * @param view the view you want visual focus on
  * @param viewLocation in case you need to do some custom calculation to move the copy of the view
@@ -65,20 +60,14 @@ class FocusArea private constructor(
      * A focus area by default consumes a "BackgroundEffectRenderLayout" for the surrounding area, that view
      * takes a background settings object and this is just a convenience method to generate them easily. This
      * enables us to match the properties, used in the surrounding area/view of a focus area
-
-     * @param renderCanvasPositionCommand lets control the location/position of the recording canvas
-     * that copies/draws the views behind a "BackgroundEffectRenderLayout". This callback also passes a
-     * reference pf the BackgroundEffectRenderLayout so you can get things like its location on screen
-     * which is useful when modifying the position of the recording canvas
      */
-    fun generateBackgroundSettings(renderCanvasPositionCommand: (RecordingCanvas, View) -> Unit): BackgroundSettings {
+    fun generateBackgroundSettings(): BackgroundSettings {
         return BackgroundSettings(
             surroundingThicknessEffect,
             shouldClipToBackground,
             surroundingAreaBackgroundDrawableFactory.invoke(),
             surroundingAreaPaint,
-            surroundingAreaPadding,
-            renderCanvasPositionCommand
+            surroundingAreaPadding
         )
     }
 
