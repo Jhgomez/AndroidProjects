@@ -34,7 +34,6 @@ import androidx.core.view.WindowInsetsCompat
 
 class FocusArea private constructor(
     val view: View,
-    val viewLocation: IntArray,
     val surroundingThickness: SurroundingThickness,
     val surroundingThicknessEffect: RenderEffect?,
     val surroundingAreaPaint: Paint,
@@ -79,7 +78,6 @@ class FocusArea private constructor(
 
     class Builder {
         private var view: View? = null
-        private var viewLocation: IntArray? = null
         private var surroundingThicknessEffect: RenderEffect? = null
         private var surroundingAreaPaint: Paint? = null
         private var surroundingAreaBackgroundDrawableFactory: (() -> Drawable)? = null
@@ -99,11 +97,6 @@ class FocusArea private constructor(
 
         fun setView(view: View): Builder {
             this.view = view
-            return this
-        }
-
-        fun setViewLocation(viewLocation: IntArray): Builder {
-            this.viewLocation = viewLocation
             return this
         }
 
@@ -229,29 +222,29 @@ class FocusArea private constructor(
         fun build(): FocusArea {
             if (view == null) throw IllegalStateException("view can't be null")
 
-            if (viewLocation == null) {
-                viewLocation = intArrayOf(0, 0)
-
-                view!!.getLocationOnScreen(viewLocation)
-
-                val insets = WindowInsetsCompat.toWindowInsetsCompat(view!!.rootWindowInsets)
-
-//                topBarHeight = view!!.rootWindowInsets?.getInsetsIgnoringVisibility(
-//                    WindowInsets.Type.statusBars()
-//                )?.top ?: 0
-
-                val navBarLeft = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars()).left
-                viewLocation!![0] -= navBarLeft
-
-                val topBarHeight = insets.getInsetsIgnoringVisibility(
-            //                        WindowInsets.Type.statusBars()
-                    WindowInsetsCompat.Type.statusBars()
-                ).top
-
-                viewLocation!![1] -= topBarHeight
-            } else if (viewLocation!!.size != 2) {
-                throw IllegalStateException("Location can only contain two values, x and y")
-            }
+//            if (viewLocation == null) {
+//                viewLocation = intArrayOf(0, 0)
+//
+//                view!!.getLocationOnScreen(viewLocation)
+//
+//                val insets = WindowInsetsCompat.toWindowInsetsCompat(view!!.rootWindowInsets)
+//
+////                topBarHeight = view!!.rootWindowInsets?.getInsetsIgnoringVisibility(
+////                    WindowInsets.Type.statusBars()
+////                )?.top ?: 0
+//
+//                val navBarLeft = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.navigationBars()).left
+//                viewLocation!![0] -= navBarLeft
+//
+//                val topBarHeight = insets.getInsetsIgnoringVisibility(
+//            //                        WindowInsets.Type.statusBars()
+//                    WindowInsetsCompat.Type.statusBars()
+//                ).top
+//
+//                viewLocation!![1] -= topBarHeight
+//            } else if (viewLocation!!.size != 2) {
+//                throw IllegalStateException("Location can only contain two values, x and y")
+//            }
 
             val surroundingThickness = SurroundingThickness(
                 dpToPx(thickTop, this.view!!.context),
@@ -285,7 +278,6 @@ class FocusArea private constructor(
 
             return FocusArea(
                 view!!,
-                viewLocation!!,
                 surroundingThickness,
                 surroundingThicknessEffect,
                 surroundingAreaPaint!!,
