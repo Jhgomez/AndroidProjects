@@ -23,6 +23,7 @@ class DialogWrapperLayout @JvmOverloads constructor(
     attrs: AttributeSet? = null
 ) : ConstraintLayout(context, attrs) {
     var focusArea: FocusArea? = null
+    lateinit var emphasisViewLoc: IntArray
 
     private var contentCopy: RenderNode? = null
     private val contentWithEffect: RenderNode?
@@ -60,8 +61,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 fa.surroundingThickness.top +
                 fa.surroundingThickness.bottom
 
-        val focusViewXLoc = fa.viewLocation[0] - fa.surroundingThickness.start
-        val focusViewYLoc = fa.viewLocation[1] - fa.surroundingThickness.top
+        val focusViewXLoc = emphasisViewLoc[0] - fa.surroundingThickness.start
+        val focusViewYLoc = emphasisViewLoc[1] - fa.surroundingThickness.top
 
         val isDrawnB4Start = focusViewXLoc  < 0
         val isDrawnB4Top = focusViewYLoc < 0
@@ -107,9 +108,10 @@ class DialogWrapperLayout @JvmOverloads constructor(
         }
     }
 
-    fun configuredDialog(fa: FocusArea, fd: FocusDialog, renderNode: RenderNode?) {
+    fun configuredDialog(fa: FocusArea, fd: FocusDialog, renderNode: RenderNode?, emphasisViewLoc: IntArray) {
         contentCopy = renderNode
         focusArea = fa
+        this.emphasisViewLoc = emphasisViewLoc
 
         if (fd.dialogView is BackgroundEffectRendererLayout) {
             fd.dialogView.setBackgroundRenderNode(renderNode)
@@ -219,15 +221,15 @@ class DialogWrapperLayout @JvmOverloads constructor(
 
                     // make a copy of original content but only of the specified view and the requested
                     // surrounding area
-                    if (fa.viewLocation.size == 2) {
+                    if (emphasisViewLoc.size == 2) {
                         var focusWidth = fa.view.width
                         var focusHeight = fa.view.height
 
-                        var translationX = fa.viewLocation[0].toFloat()
-                        var translationY = fa.viewLocation[1].toFloat()
+                        var translationX = emphasisViewLoc[0].toFloat()
+                        var translationY = emphasisViewLoc[1].toFloat()
 
-                        var canvasTranslationX = -fa.viewLocation[0].toFloat()
-                        var canvasTranslationY = -fa.viewLocation[1].toFloat()
+                        var canvasTranslationX = -emphasisViewLoc[0].toFloat()
+                        var canvasTranslationY = -emphasisViewLoc[1].toFloat()
 
                         // here is where we add the surrounding area thickness as a square which is a
                         // exact copy of the actual surrounding but, again, note that its limitation is
@@ -308,8 +310,8 @@ class DialogWrapperLayout @JvmOverloads constructor(
                         val isInvalidateIssued = super.drawChild(canvas, child, drawingTime)
 
                         canvas.translate(
-                            focusArea!!.viewLocation[0].toFloat(),
-                            focusArea!!.viewLocation[1].toFloat()
+                            emphasisViewLoc[0].toFloat(),
+                            emphasisViewLoc[1].toFloat()
                         )
 
                         focusArea!!.view.draw(canvas)
