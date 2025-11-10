@@ -39,17 +39,17 @@ class FocusDialog private constructor(
         private var dialogView: View? = null
         private var pathViewBackgroundRenderEffect: RenderEffect? = null
         private var pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)? = null
-        private var dialogConstraintsCommand: ((constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit)? = null
+        private var dialogConstraintsCommand: ((constraintLayout: DialogWrapperLayout, focusView: View, dialog: View) -> Unit)? = null
 
         fun setPathViewPathGeneratorCommand(
-            pathViewPathGeneratorCommand: ((refView: View, dialog: View) -> Path)?
+            pathViewPathGeneratorCommand: ((focusView: View, dialog: View) -> Path)?
         ): Builder {
             this.pathViewPathGeneratorCommand = pathViewPathGeneratorCommand
             return this
         }
 
         fun setDialogConstraintsCommand(
-            dialogConstraintsCommand: (constraintLayout: DialogWrapperLayout, refView: View, dialog: View) -> Unit
+            dialogConstraintsCommand: (constraintLayout: DialogWrapperLayout, focusView: View, dialog: View) -> Unit
         ): Builder {
             this.dialogConstraintsCommand = dialogConstraintsCommand
             return this
