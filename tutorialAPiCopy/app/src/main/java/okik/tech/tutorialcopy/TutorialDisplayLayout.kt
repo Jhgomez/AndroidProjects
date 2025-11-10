@@ -1,6 +1,5 @@
 package okik.tech.tutorialcopy
 
-import android.app.Activity
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.RenderNode
@@ -8,10 +7,8 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.Gravity
 import android.view.View
-import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.PopupWindow
-import androidx.core.view.size
 
 /**
  * This custom layout is expected to only have one child, if you add more children they won't render
@@ -69,19 +66,21 @@ class TutorialDisplayLayout @JvmOverloads constructor(
             contentCopy.endRecording()
         }
 
+        val location = IntArray(2)
+        focusArea.view.getLocationOnScreen(location)
+
+        val selfLocation = IntArray(2)
+        getLocationOnScreen(selfLocation)
+
+        location[0] -= selfLocation[0]
+        location[1] -= selfLocation[1]
+
         dialogWrapperLayout = DialogWrapperLayout(context)
 
-        dialogWrapperLayout!!.configuredDialog(
-            focusArea,
-            focusDialog,
-            contentCopy
-        )
+        dialogWrapperLayout!!.configuredDialog(focusArea, focusDialog, contentCopy, location)
 
-        val loc = IntArray(2)
-        getLocationOnScreen(loc)
-
-        val possibleWidth = resources.displayMetrics.widthPixels - loc[0]
-        val possibleHeight = resources.displayMetrics.heightPixels - loc[1]
+        val possibleWidth = resources.displayMetrics.widthPixels - selfLocation[0]
+        val possibleHeight = resources.displayMetrics.heightPixels - selfLocation[1]
 
         popup = PopupWindow(
             dialogWrapperLayout,
@@ -97,7 +96,7 @@ class TutorialDisplayLayout @JvmOverloads constructor(
 
         popup!!.setOnDismissListener(PopupWindow.OnDismissListener { popup = null })
 
-        popup!!.showAtLocation(this, Gravity.NO_GRAVITY, loc[0], loc[1])
+        popup!!.showAtLocation(this, Gravity.NO_GRAVITY, selfLocation[0], selfLocation[1])
     }
 
     fun hideTutorialComponents() {
