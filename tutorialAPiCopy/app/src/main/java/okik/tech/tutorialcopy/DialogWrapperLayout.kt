@@ -10,7 +10,6 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewTreeObserver
-import android.widget.PopupWindow
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.graphics.ColorUtils
@@ -180,10 +179,10 @@ class DialogWrapperLayout @JvmOverloads constructor(
                 bridgeView.setBackgroundConfigs(
                     renderNode,
                     path,
-                    fd.originBackgroundPaint,
+                    fd.pathViewPathPaint,
                     true,
                     true,
-                    fd.backgroundRenderEffect
+                    fd.pathViewBackgroundRenderEffect
                 )
 
                 fd.dialogView.viewTreeObserver.removeOnPreDrawListener(this)

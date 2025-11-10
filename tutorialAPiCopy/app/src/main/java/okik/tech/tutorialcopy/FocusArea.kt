@@ -2,7 +2,6 @@ package okik.tech.tutorialcopy
 
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.RecordingCanvas
 import android.graphics.RenderEffect
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -72,21 +71,10 @@ class FocusArea private constructor(
     }
 
     fun generateMatchingFocusDialog(): FocusDialog.Builder {
-        val refWidth = view.width + surroundingThickness.start + surroundingThickness.end
-        val refHeight = view.height + surroundingThickness.top + surroundingThickness.bottom
-
-        val x = viewLocation[0] - surroundingThickness.start
-        val y = viewLocation[1] - surroundingThickness.top
-
-        val location = intArrayOf(x.toInt(), y.toInt())
-
         return FocusDialog
             .Builder()
             .setOriginBackgroundPaint(surroundingAreaPaint)
-            .setReferenceViewLocation(location)
-            .setReferenceViewSize(refWidth.toInt(), refHeight.toInt())
-            .setShouldClipToBackground(shouldClipToBackground)
-            .setBackgroundRenderEffect(surroundingThicknessEffect)
+            .setPathViewBackgroundRenderEffect(surroundingThicknessEffect)
     }
 
     class Builder {
