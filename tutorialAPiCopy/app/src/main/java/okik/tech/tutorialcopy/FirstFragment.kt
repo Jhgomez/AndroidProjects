@@ -1,21 +1,20 @@
 package okik.tech.tutorialcopy
 
+import android.app.Activity
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.Path
-import android.graphics.drawable.ShapeDrawable
-import android.graphics.drawable.shapes.OvalShape
-import android.os.Build
+import android.graphics.RenderEffect
+import android.graphics.Shader
 import android.os.Bundle
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewGroup.MarginLayoutParams
+import android.view.WindowInsets
 import android.widget.FrameLayout.LayoutParams
-import androidx.annotation.RequiresApi
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.doOnLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import okik.tech.tutorialcopy.databinding.DialogContentBinding
@@ -51,65 +50,139 @@ class FirstFragment : Fragment() {
         val adapter = MyAdapter(listOf(1,2,3,4,5,6,7,8,9))
         binding.recycler.adapter = adapter
 
-        binding.block?.setBackgroundColor(Color.BLUE)
+        binding.block.setBackgroundColor(Color.GREEN)
 
+        var count = 0
         binding.buttonFirst.setOnClickListener {
-            val aView = manager.findViewByPosition(3)
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+//            if (count == 0) {
+//                count += 1
+                val aView = binding.thete
+                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
 
-            }
+                }
 
-            if (aView != null) {
-                val paint = Paint()
-                paint.color = Color.GREEN
-                paint.alpha = 180
-                paint.isAntiAlias = true
-                paint.style = Paint.Style.STROKE
-                paint.strokeWidth = 16f
+                if (aView != null) {
+                    val paint = Paint()
+                    paint.color = Color.WHITE
+                    paint.alpha = 200
+                    paint.isAntiAlias = true
+                    paint.style = Paint.Style.FILL
+                    paint.strokeWidth = 16f
 
-                val focusArea = FocusArea.Builder()
-                    .setView(aView) // binding.thete ?:
+                    val focusArea = FocusArea.Builder()
+                        .setView(aView) // binding.thete ?:
 //                        .setOuterAreaEffect(
-//                            RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+//                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
 //                        )
-                    .setOuterAreaOverlayColor(Color.BLACK)
-                    .setOuterAreaOverlayAlpha(180)
-                    .setSurroundingAreaPadding(10, 10, 10, 10)
-                    .setSurroundingAreaBackgroundDrawableFactory(
-                        {
-                            val roundShape = OvalShape()
-
-                            return@setSurroundingAreaBackgroundDrawableFactory ShapeDrawable(roundShape)
-                        }
-                    )
+                        .setOuterAreaOverlayColor(Color.BLACK)
+                        .setOuterAreaOverlayAlpha(110)
+//                    .setSurroundingAreaPadding(10, 10, 10, 10)
+//                    .setSurroundingAreaBackgroundDrawableFactory(
+//                        {
+//                            val roundShape = OvalShape()
+//
+//                            return@setSurroundingAreaBackgroundDrawableFactory ShapeDrawable(roundShape)
+//                        }
+//                    )
 //                        .setSurroundingThicknessEffect(
-//                            RenderEffect.createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+//                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
 //                        )
-                    .setSurroundingAreaPaint(paint)
-                    .setShouldClipToBackground(false)
-                    .setSurroundingThickness(50, 50, 50, 50)
-                    .build()
+                        .setSurroundingAreaPaint(paint)
+                        .setShouldClipToBackground(true)
+                        .setSurroundingThickness(50, 50, 50, 50)
+                        .build()
 
-                val dialog = getDialog(focusArea)
+                    val dialog = getDialog(focusArea)
 
-                val focusDialog = focusArea.generateMatchingFocusDialog(
-                    Gravity.BOTTOM,
-                    0,
-                    80,
-                    0.5,
-                    0.5,
-                    false,
-                    dialog
-                )
+                    val focusDialog = focusArea
+                        .generateMatchingFocusDialog()
+                        .setDialogView(dialog)
+                        .setDialogConstraintsCommand { cl, focusView, dialog ->
+                            DialogWrapperLayout.constraintDialogToTop(
+                                cl,
+                                focusView,
+                                dialog,
+                                0.0,
+                                dpToPx(400, focusView.context).toDouble(),
+                                false
+                            )
+                        }
+                        .setPathViewPathGeneratorCommand { focusVIew, dialog ->
+                            DialogWrapperLayout.drawPathToTopDialog(
+                                focusVIew,
+                                dialog,
+                                0.1,
+                                0.1,
+                                dpToPx(120, focusVIew.context).toDouble()
+                            )
+                        }
+                        .build()
 
-                (binding.root as TutorialDisplayLayout).renderFocusAreaWithDialog(focusArea, focusDialog)
-            }
+
+//                    binding.root.renderFocusArea(focusArea)
+                    binding.root.renderFocusAreaWithDialog(focusArea, focusDialog)
+
+//                val bsb = BottomSheetBehavior.from(binding.bottomchit)
+//                bsb.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+//                    override fun onStateChanged(
+//                        bottomSheet: View,
+//                        newState: Int
+//                    ) {
+//
+//                    }
+//
+//                    override fun onSlide(
+//                        bottomSheet: View,
+//                        slideOffset: Float
+//                    ) {
+//
+//                    }
+//                })
+//
+//                bsb.state = BottomSheetBehavior.STATE_COLLAPSED
+                }
+//            } else {
+//                count -= 1
+//                binding.root.hideTutorialComponents()
+//            }
+
+            val colors = arrayOf(Color.MAGENTA, Color.WHITE, Color.RED, Color.GREEN, Color.YELLOW,
+                Color.BLUE)
+
+            val thread = Thread({
+                Thread.sleep(2000)
+
+                val dim = dpToPx(120, requireContext()).toInt()
+
+                val view = View(requireContext())
+                view.id = View.generateViewId()
+                view.layoutParams = ConstraintLayout.LayoutParams(dim, dim)
+
+                binding.clTtdl.post {
+                    binding.clTtdl.addView(view)
+
+                    val cs = ConstraintSet()
+                    cs.clone(binding.clTtdl)
+
+                    cs.connect(view.id, ConstraintSet.BOTTOM, binding.clTtdl.id, ConstraintSet.BOTTOM)
+                    cs.connect(view.id, ConstraintSet.LEFT, binding.clTtdl.id, ConstraintSet.LEFT)
+
+                    cs.applyTo(binding.clTtdl)
+
+                    (view.layoutParams as MarginLayoutParams).marginStart = dpToPx(16, requireContext()).toInt()
+                    (view.layoutParams as MarginLayoutParams).bottomMargin = dpToPx(32, requireContext()).toInt()
+
+                    view.setBackgroundColor(colors.random())
+                }
+            })
+
+            thread.start()
         }
     }
 
     private fun getDialog(
         focusArea: FocusArea
-    ): View {
+    ): BackgroundEffectRendererLayout {
         val dialog = BackgroundEffectRendererLayout(requireContext())
 
         dialog.layoutParams = ConstraintLayout.LayoutParams(700, 530)
@@ -131,13 +204,24 @@ class FirstFragment : Fragment() {
 
         dialog.addView(content.root)
 
-        content.tb.setOnClickListener {
-//            popi.dismiss()
-//            this.focusArea = null
+        val backgroundSettings = focusArea.generateBackgroundSettings()
+
+        dialog.setBackgroundConfigs(backgroundSettings)
+
+
+//        val insets =
+//            ViewCompat.getRootWindowInsets(referenceView)
 //
-//            for (i in 1 .. childCount -1) {
-//                getChildAt(i).visibility = GONE
-//            }
+//        val topInset: Int
+//
+//        if (insets != null) {
+//            topInset = insets.getInsetsIgnoringVisibility(WindowInsetsCompat.Type.statusBars()).top
+//        } else {
+//            topInset = 0
+//        }
+
+       content.tb.setOnClickListener {
+           binding.root.hideTutorialComponents()
         }
 
         return dialog
