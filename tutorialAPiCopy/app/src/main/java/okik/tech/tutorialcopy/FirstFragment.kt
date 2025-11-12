@@ -17,6 +17,10 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import okik.tech.coachmark.BackgroundEffectRendererLayout
+import okik.tech.coachmark.DialogWrapperLayout
+import okik.tech.coachmark.FocusArea
+import okik.tech.coachmark.ViewUtils.dpToPx
 import okik.tech.tutorialcopy.databinding.DialogContentBinding
 import okik.tech.tutorialcopy.databinding.FragmentFirstBinding
 
@@ -56,7 +60,7 @@ class FirstFragment : Fragment() {
         binding.buttonFirst.setOnClickListener {
 //            if (count == 0) {
 //                count += 1
-                val aView = binding.thete
+                val aView = binding.recycler.layoutManager?.findViewByPosition(1)
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
 
                 }
@@ -64,16 +68,16 @@ class FirstFragment : Fragment() {
                 if (aView != null) {
                     val paint = Paint()
                     paint.color = Color.WHITE
-                    paint.alpha = 200
+                    paint.alpha = 0
                     paint.isAntiAlias = true
                     paint.style = Paint.Style.FILL
                     paint.strokeWidth = 16f
 
                     val focusArea = FocusArea.Builder()
                         .setView(aView) // binding.thete ?:
-//                        .setOuterAreaEffect(
-//                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
-//                        )
+                        .setOuterAreaEffect(
+                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
+                        )
                         .setOuterAreaOverlayColor(Color.BLACK)
                         .setOuterAreaOverlayAlpha(110)
 //                    .setSurroundingAreaPadding(10, 10, 10, 10)
@@ -84,9 +88,9 @@ class FirstFragment : Fragment() {
 //                            return@setSurroundingAreaBackgroundDrawableFactory ShapeDrawable(roundShape)
 //                        }
 //                    )
-//                        .setSurroundingThicknessEffect(
-//                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
-//                        )
+                        .setSurroundingThicknessEffect(
+                            RenderEffect.createBlurEffect(10f, 10f, Shader.TileMode.CLAMP)
+                        )
                         .setSurroundingAreaPaint(paint)
                         .setShouldClipToBackground(true)
                         .setSurroundingThickness(50, 50, 50, 50)
@@ -98,7 +102,7 @@ class FirstFragment : Fragment() {
                         .generateMatchingFocusDialog()
                         .setDialogView(dialog)
                         .setDialogConstraintsCommand { cl, focusView, dialog ->
-                            DialogWrapperLayout.constraintDialogToTop(
+                            DialogWrapperLayout.constraintDialogToBottom(
                                 cl,
                                 focusView,
                                 dialog,
@@ -107,13 +111,13 @@ class FirstFragment : Fragment() {
                                 false
                             )
                         }
-                        .setPathViewPathGeneratorCommand { focusVIew, dialog ->
-                            DialogWrapperLayout.drawPathToTopDialog(
-                                focusVIew,
+                        .setPathViewPathGeneratorCommand { fv, dialog ->
+                            DialogWrapperLayout.drawPathToBottomDialog(
+                                fv,
                                 dialog,
                                 0.1,
                                 0.1,
-                                dpToPx(120, focusVIew.context).toDouble()
+                                dpToPx(120,fv.context).toDouble()
                             )
                         }
                         .build()
