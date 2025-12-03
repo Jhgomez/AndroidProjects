@@ -31,31 +31,17 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
 
-        val textView: TextView = binding.textHome
+        binding.one.setOnClickListener { _ ->
+            binding.root.invalidateOne()
+        }
 
-        val roundContainer = RoundContainer(requireContext())
-        roundContainer.layoutParams = ConstraintLayout.LayoutParams(
-            ConstraintLayout.LayoutParams.MATCH_PARENT,
-            200
-        )
-        roundContainer.id = View.generateViewId()
+        binding.two.setOnClickListener { _ ->
+            binding.root.invalidateTwo()
+        }
 
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(root as ConstraintLayout)
-
-        constraintSet.connect(roundContainer.id, ConstraintSet.TOP, root.id, ConstraintSet.TOP)
-        constraintSet.connect(roundContainer.id, ConstraintSet.START, root.id, ConstraintSet.START)
-
-        constraintSet.applyTo(root)
-
-        root.addView(roundContainer)
-
-        val text = TextView(requireContext())
-        text.text = "ivannita bebe"
-        text.textSize = 32f
-        text.setTextColor(Color.RED)
-
-        roundContainer.addView(text)
+        binding.three.setOnClickListener { _ ->
+            binding.root.invalidateThree()
+        }
 
 //        roundContainer.setEffectHolderBackgroundPadding(10)
 
