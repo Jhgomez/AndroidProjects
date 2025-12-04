@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <application
+        android:allowBackup="true"
+        android:name=".App"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+
+        <activity
+            android:name=".shop.ShopActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/ShopTheme" />
+        <activity
+            android:name=".weather.WeatherActivity"
+            android:screenOrientation="portrait"
+            android:theme="@style/WeatherTheme" />
+
+        <activity
+            android:theme="@style/GalleryTheme"
+            android:name=".gallery.GalleryActivity"/>
+    </application>
+
+</manifest>
